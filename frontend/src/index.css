@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -8,17 +10,6 @@
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #0f172a; /* Slate-950 */
-  color: #f8fafc; /* Slate-50 */
-}
-
-/* Tailwind v4 uses @import "tailwindcss" so we don't need @tailwind base/components/utilities manually here if using the plugin. 
-   We can add custom theme variables or utility classes below. */
-
-@theme {
-  --color-brand: #3b82f6;
 }
