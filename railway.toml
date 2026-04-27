@@ -1,8 +1,8 @@
 [build]
-builder = "NIXPACKS"
+builder = "DOCKERFILE"
 
 [deploy]
-startCommand = "node backend/server.js"
+# Dockerfile handles the start command
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 healthCheckPath = "/api/health"
