@@ -1,4 +1,3 @@
-import React from 'react';
 import { mockData } from '../../data/mockData';
 import { AlertCard } from '../ui/AlertCard';
 import { BenchmarkIndicator } from '../ui/BenchmarkIndicator';
@@ -16,7 +15,6 @@ export const OverviewTab = () => {
               type={alert.type} 
               headline={alert.headline} 
               subtext={alert.subtext} 
-              severity={alert.severity} 
             />
           ))}
         </div>
@@ -56,7 +54,6 @@ export const OverviewTab = () => {
             </div>
           ))}
         </div>
-      </</strong>
       </section>
 
       {/* 3. Valuation Preview & Quick Stats */}

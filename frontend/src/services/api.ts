@@ -1,4 +1,4 @@
-import { mockData, MockData } from '../data/mockData';
+import { mockData, type MockData } from '../data/mockData';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA === 'true';
 
@@ -38,7 +38,7 @@ export async function fetchValuationDetails(): Promise<any> {
     };
   }
 
-  const response = await fetch(`${API_BASECR}/valuation`);
+  const response = await fetch(`${API_BASE_URL}/valuation`);
   if (!response.ok) {
     throw new Error(`Failed to fetch valuation details: ${response.statusText}`);
   }

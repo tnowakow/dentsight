@@ -1,11 +1,4 @@
-import React from 'react';
 import { ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 interface BenchmarkIndicatorProps {
   current: string | number;

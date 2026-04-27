@@ -102,7 +102,7 @@ export const mockData: MockData = {
   healthScore: 84,
   quickStats: {
     monthlyProduction: 125000,
-    unschentedTreatmentValue: 45000,
+    unscheduledTreatmentValue: 45000,
     noShowRate: 8.5,
     caseAcceptance: 72,
   },

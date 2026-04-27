@@ -1,5 +1,4 @@
-import React from 'react';
-import { AlertType } from '../data/mockData';
+import { type AlertType } from '../../data/mockData';
 import { AlertTriangle, CheckCircle2, Info } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -12,10 +11,9 @@ interface AlertCardProps {
   type: AlertType;
   headline: string;
   subtext: string;
-  severity: number;
 }
 
-export const AlertCard: React.FC<AlertCardProps> = ({ type, headline, subtext, severity }) => {
+export const AlertCard: React.FC<AlertCardProps> = ({ type, headline, subtext }) => {
   const variants = {
     warning: {
       container: 'bg-amber-500/10 border-amber-500 text-amber-500',
@@ -23,7 +21,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({ type, headline, subtext, s
     },
     success: {
       container: 'bg-emerald-500/10 border-emerald-500 text-emerald-500',
-      icon: <CheckCircle2 className="w-5 h	h-5" />,
+      icon: <CheckCircle2 className="w-5 h-5" />,
     },
     info: {
       container: 'bg-blue-500/10 border-blue-500 text-blue-500',

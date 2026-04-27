@@ -1,5 +1,4 @@
-import React from 'react';
-import { useDentsightStore } from '../store/useDentsightStore';
+import { useDentsightStore } from '../../store/useDentsightStore';
 import { Home, Activity, DollarSign, Calculator } from 'lucide-react';
 
 const tabs = [

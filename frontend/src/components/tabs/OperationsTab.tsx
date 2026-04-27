@@ -1,7 +1,5 @@
-import React from 'react';
 import { mockData } from '../../data/mockData';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, ReferenceArea } from 'recharts';
-import { BenchmarkIndicator } from '../ui/BenchmarkIndicator';
 
 export const OperationsTab = () => {
   return (

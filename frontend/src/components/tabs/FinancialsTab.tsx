@@ -1,7 +1,5 @@
-import React from 'react';
 import { mockData } from '../../data/mockData';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { BenchmarkIndicator } from '../ui/BenchmarkIndicator';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 

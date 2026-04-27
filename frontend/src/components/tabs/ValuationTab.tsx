@@ -1,7 +1,4 @@
-import React from 'react';
 import { mockData } from '../../data/mockData';
-import { BenchmarkIndicator } from '../ui/BenchmarkIndicator';
-import { Slider } from '@radix-ui/react-slider'; // I'll use a simple HTML range for simplicity or assume radx is there, but better to just use standard CSS for the demo if possible. Actually, let's stick to plain React/Tailwind as requested.
 
 export const ValuationTab = () => {
   const { valuationDetails, addbacks } = mockData;
