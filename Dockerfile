@@ -19,14 +19,15 @@ WORKDIR /app
 # Install system dependencies if needed (e.g., for postgres client)
 RUN apk add --no-cache python3 make g++
 
-# Copy backend package files
+# Copy backend package files and prisma schema first
 COPY backend/package*.json ./backend/
+COPY backend/prisma/ ./backend/prisma/
 RUN cd backend && npm install
 
 # Generate Prisma client (required for @prisma/client to work)
 RUN cd backend && npx prisma generate
 
-# Copy backend source code
+# Copy rest of backend source code
 COPY backend/ ./backend/
 
 # Copy built frontend assets from Stage 1 to the backend's public directory
