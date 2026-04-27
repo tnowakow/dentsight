@@ -40,46 +40,46 @@ export const OverviewTab = () => {
             { label: 'Net Collection Rate', value: '94%', trend: 'up' as const, target: '92%' },
             { label: 'Hygiene Re-appointment', value: '78%', trend: 'down' as const, target: '85%' },
             { label: 'Denial Rate', value: '5.4%', trend: 'stable' as const, target: '5%' },
-            { label: 'Case Acceptance', value: '72%', trend: 'up' as const, target: '70%' },
-        ].map((kpi, i) => {
-          const tooltips = {
-            'Net Collection Rate': {
-              title: 'Net Collection Rate',
-              description: 'Percentage of total production actually collected from patients and insurance companies.',
-              calculation: '(Total Collections / Total Production) × 100\n\nTarget: 95%+ indicates efficient billing and collections process.'
-            },
-            'Hygiene Re-appointment': {
-              title: 'Hygiene Re-appointment Rate',
-              description: 'Percentage of hygiene patients who book their next cleaning before leaving the office.',
-              calculation: '(Patients with Future Hygiene Appointments / Total Hygiene Completions) × 100\n\nTarget: 85%+ ensures consistent patient flow and retention.'
-            },
-            'Denial Rate': {
-              title: 'Claim Denial Rate',
-              description: 'Percentage of insurance claims that are denied or rejected on first submission.',
-              calculation: '(Denied Claims / Total Claims Submitted) × 100\n\nTarget: Below 5% indicates strong billing accuracy and insurance relationships.'
-            },
-            'Case Acceptance': {
-              title: 'Case Acceptance Rate',
-              description: 'Percentage of recommended treatment plans that patients accept and proceed with.',
-              calculation: '(Production from Accepted Cases / Total Production Recommended) × 100\n\nTarget: 70%+ shows effective treatment presentation and patient communication.'
-            }
-          }[kpi.label] || null
+            { label: 'Case Acceptance', value: '72%', trend: 'up' as const, target: '70%' }
+          ].map((kpi, i) => {
+            const tooltips = {
+              'Net Collection Rate': {
+                title: 'Net Collection Rate',
+                description: 'Percentage of total production actually collected from patients and insurance companies.',
+                calculation: '(Total Collections / Total Production) × 100\n\nTarget: 95%+ indicates efficient billing and collections process.'
+              },
+              'Hygiene Re-appointment': {
+                title: 'Hygiene Re-appointment Rate',
+                description: 'Percentage of hygiene patients who book their next cleaning before leaving the office.',
+                calculation: '(Patients with Future Hygiene Appointments / Total Hygiene Completions) × 100\n\nTarget: 85%+ ensures consistent patient flow and retention.'
+              },
+              'Denial Rate': {
+                title: 'Claim Denial Rate',
+                description: 'Percentage of insurance claims that are denied or rejected on first submission.',
+                calculation: '(Denied Claims / Total Claims Submitted) × 100\n\nTarget: Below 5% indicates strong billing accuracy and insurance relationships.'
+              },
+              'Case Acceptance': {
+                title: 'Case Acceptance Rate',
+                description: 'Percentage of recommended treatment plans that patients accept and proceed with.',
+                calculation: '(Production from Accepted Cases / Total Production Recommended) × 100\n\nTarget: 70%+ shows effective treatment presentation and patient communication.'
+              }
+            }[kpi.label] || null
 
-          return (
-            <div key={i} className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-3 relative">
-              {tooltips && <InfoTooltip {...tooltips} />}
-              <p className="text-sm font-medium text-slate-400">{kpi.label}</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold">{kpi.value}</span>
+            return (
+              <div key={i} className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-3 relative">
+                {tooltips && <InfoTooltip {...tooltips} />}
+                <p className="text-sm font-medium text-slate-400">{kpi.label}</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold">{kpi.value}</span>
+                </div>
+                <BenchmarkIndicator 
+                  current={kpi.value} 
+                  target={kpi.target} 
+                  trend={kpi.trend} 
+                />
               </div>
-              <BenchmarkIndicator 
-                current={kpi.value} 
-                target={kpi.target} 
-                trend={kpi.trend} 
-              />
-            </div>
-          )
-        })
+            )
+          })}
         </div>
       </section>
 
