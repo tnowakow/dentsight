@@ -16,8 +16,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install system dependencies if needed (e.g., for postgres client)
-RUN apk add --no-cache python3 make g++
+# Install system dependencies including PostgreSQL client for migrations
+RUN apk add --no-cache python3 make g++ postgresql-client
 
 # Copy backend package files and prisma schema first
 COPY backend/package*.json ./backend/
@@ -29,6 +29,10 @@ RUN cd backend && npx prisma generate
 
 # Copy rest of backend source code
 COPY backend/ ./backend/
+
+# Make entrypoint script executable and copy it
+COPY backend/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Copy built frontend assets from Stage 1 to the backend's public directory
 # (Assuming the Express app serves static files from backend/public)
@@ -44,4 +48,6 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD wget -q --spider http://localhost:3000/api/health || exit 1
 
+# Use entrypoint script to run migrations before starting server
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["node", "backend/index.js"]
