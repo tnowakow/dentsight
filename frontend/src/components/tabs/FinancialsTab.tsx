@@ -1,5 +1,6 @@
 import { mockData } from '../../data/mockData';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { InfoTooltip } from '../ui/InfoTooltip';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
@@ -7,8 +8,14 @@ export const FinancialsTab = () => {
   return (
     <div className="space-y-8 animate-	in fade-in duration-500">
       {/* 1. Denial Rate by Payer */}
-      <section className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-6">
-        <h3 className="text-lg font-semibold text-white">Denial Rate by Payer</h3>
+      <section className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-6 relative">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-white">Denial Rate by Payer</h3>
+          <InfoTooltip 
+            title="Claim Denial Rate by Insurance"
+            description="Shows denial rates for each insurance carrier your practice works with. High denial rates indicate billing issues or contract problems."
+            calculation="(Denied Claims from Carrier / Total Claims to Carrier) × 100\n\nRed flags: Any payer above 8% needs investigation. Consider switching underperforming carriers." />
+        </div>
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={mockData.denialRates} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
@@ -31,8 +38,14 @@ export const FinancialsTab = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* 2. Production Breakdown */}
-        <section className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-6">
-          <h3 className="text-lg font-semibold text-white">Production Breakdown</h3>
+        <section className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-6 relative">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-white">Production Breakdown</h3>
+            <InfoTooltip 
+              title="Production Revenue Sources"
+              description="Shows how your practice's production is split between insurance payments and patient out-of-pocket payments."
+              calculation="Insurance % = (Insurance Production / Total Production) × 100\nPatient Pay % = (Patient Payments / Total Production) × 100\n\nHealthy mix: 70-80% insurance, 20-30% patient pay indicates good case acceptance." />
+          </div>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -62,8 +75,14 @@ export const FinancialsTab = () => {
         </section>
 
         {/* 3. Cost Analysis */}
-        <section className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4">
-          <h3 className="text-lg font-semibold text-white">Cost Analysis</h3>
+        <section className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4 relative">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-white">Cost Analysis</h3>
+            <InfoTooltip 
+              title="Practice Cost Metrics"
+              description="Key cost indicators that measure practice efficiency and overhead management."
+              calculation="Cost per Chair Hour: Total overhead ÷ total chair hours (target: $40-50)\nSupply Cost %: Lab/supply costs ÷ production (target: 6-8%)\nLab Fee %: External lab fees ÷ production (target: 7-10%)" />
+          </div>
           <div className="space-y-4">
             <div className="p-4 bg-slate-950 rounded-xl border border-slate-800/50 flex justify-between items-center">
               <span className="text-sm text-slate-400">Cost per Chair Hour</span>

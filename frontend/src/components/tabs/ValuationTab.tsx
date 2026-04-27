@@ -1,4 +1,5 @@
 import { mockData } from '../../data/mockData';
+import { InfoTooltip } from '../ui/InfoTooltip';
 
 export const ValuationTab = () => {
   const { valuationDetails, addbacks } = mockData;
@@ -6,8 +7,14 @@ export const ValuationTab = () => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* 1. EBITDA Calculation Breakdown */}
-      <section className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4">
-        <h3 className="text-lg font-semibold text-white">EBITDA Calculation</h3>
+      <section className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4 relative">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-white">EBITDA Calculation</h3>
+          <InfoTooltip 
+            title="EBITDA (Earnings Before Interest, Taxes, Depreciation & Amortization)"
+            description="The primary metric used to value dental practices. Shows the practice's true earning power by adding back non-recurring expenses."
+            calculation="Gross Production - Operating Expenses + Add-backs = EBITDA\n\nAdd-backs: Owner-specific costs not tied to normal operations (personal expenses, one-time costs, above-market salaries)" />
+        </div>
         <div className="space-y-3">
           <div className="flex justify-between items-center text-sm py-2 border-b border-slate-800/50">
             <span className="text-slate-400 font-medium uppercase tracking-wider text-[10px]">Gross Production</span>
@@ -25,9 +32,13 @@ export const ValuationTab = () => {
       </section>
 
       {/* 2. Add-backs List */}
-      <section className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
-        <div className="p-6 border-b border-slate-800">
+      <section className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden relative">
+        <div className="p-6 border-b border-slate-800 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-white">Add-backs List</h3>
+          <InfoTooltip 
+            title="EBITDA Add-backs"
+            description="Non-recurring or owner-specific expenses added back to EBITDA to show the practice's true earning potential for a new owner."
+            calculation="Common add-backs:\n• Owner salary adjustments (to market rate)\n• Personal expenses run through business\n• One-time legal/marketing costs\n• Non-recurring repairs\n\nTotal add-backs increase valuation." />
         </div>
         <div className="divide-y divide-slate-800">
           {addbacks.map((item, i) => (
@@ -43,8 +54,14 @@ export const ValuationTab = () => {
       </section>
 
       {/* 3. Valuation Range Visualization */}
-      <section className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-8">
-         <h3 className="text-lg font-semibold text-white">Valuation Range</h3>
+      <section className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-8 relative">
+         <div className="flex items-center justify-between">
+           <h3 className="text-lg font-semibold text-white">Valuation Range</h3>
+           <InfoTooltip 
+             title="Practice Valuation Range"
+             description="Estimated market value based on current EBITDA multiplied by industry standard multiples (6.5x - 7.0x for healthy practices)."
+             calculation="Valuation = Normalized EBITDA × Market Multiple\n\nCurrent multiple: {valuationDetails.marketMultiple.current}x\nLow range: {valuationDetails.marketMultiple.low}x × EBITDA\nHigh range: {valuationDetails.marketMultiple.high}x × EBITDA\n\nMultiples vary by location, growth trend, and practice quality." />
+         </div>
          
          <div className="relative pt-4 pb-12 px-4">
             {/* The visual slider track */}

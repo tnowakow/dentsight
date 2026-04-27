@@ -1,12 +1,19 @@
 import { mockData } from '../../data/mockData';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, ReferenceArea } from 'recharts';
+import { InfoTooltip } from '../ui/InfoTooltip';
 
 export const OperationsTab = () => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* 1. Provider Hourly Production */}
-      <section className="bg-slate-90	_p-6 rounded-2xl border border-slate-800 space-y-6">
-        <h3 className="text-lg font-semibold text-white">Provider Hourly Production</h3>
+      <section className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-6 relative">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-white">Provider Hourly Production</h3>
+          <InfoTooltip 
+            title="Hourly Production by Provider"
+            description="Measures each provider's efficiency in terms of production value generated per chair hour. Compare doctors and hygienists separately."
+            calculation="Total Production ÷ Total Chair Hours\n\nDoctor target: $400-500/hr\nHygienist target: $100-130/hr\n\nLow numbers indicate underutilization or scheduling gaps." />
+        </div>
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={mockData.providerProduction} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
@@ -28,9 +35,13 @@ export const OperationsTab = () => {
       </section>
 
       {/* 2. Appointment Metrics Table */}
-      <section className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
-        <div className="p-6 border-b border-slate-800">
+      <section className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden relative">
+        <div className="p-6 border-b border-slate-800 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-white">Appointment Metrics</h3>
+          <InfoTooltip 
+            title="Appointment Performance Indicators"
+            description="Key metrics tracking how well your appointment book is performing. Trends show if you're improving (↑) or declining (↓)."
+            calculation="No-Show Rate: Target <8%\nCancellation Rate: Target <10%\nCase Acceptance: Target >70%\n\nTrends indicate month-over-month changes." />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -61,8 +72,14 @@ export const OperationsTab = () => {
       </section>
 
       {/* 3. Hygiene Re-care Trend */}
-      <section className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-6">
-        <h3 className="text-lg font-semibold text-white">Hygiene Re-care Trend</h3>
+      <section className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-6 relative">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-white">Hygiene Re-care Trend</h3>
+          <InfoTooltip 
+            title="Hygiene Recall/Re-care Rate"
+            description="Percentage of hygiene patients who return for their next scheduled cleaning. Green zone shows target range (80-85%)."
+            calculation="(Returning Hygiene Patients / Total Hygiene Completions) × 100\n\nTarget: 80-85%\nBelow 75% indicates recall system problems\nAbove 90% is exceptional performance" />
+        </div>
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={mockData.hygieneTrend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
