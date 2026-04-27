@@ -1,7 +1,3 @@
-# Force fresh build on each deploy
-ARG BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-LABEL org.opencontainers.image.build-date="$BUILD_DATE"
-
 # Stage 1: Build Frontend
 FROM node:20-alpine AS frontend-builder
 
@@ -40,8 +36,8 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-# Health check to verify container is running
+# Health check using wget (available in alpine)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/api/health || exit 1
+  CMD wget -q --spider http://localhost:3000/api/health || exit 1
 
 CMD ["node", "backend/index.js"]
