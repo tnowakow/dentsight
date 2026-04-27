@@ -1,5 +1,9 @@
 import { useDentsightStore } from '../../store/useDentsightStore';
 import { Home, Activity, DollarSign, Calculator } from 'lucide-react';
+import { OverviewTab } from '../tabs/OverviewTab';
+import { FinancialsTab } from '../tabs/FinancialsTab';
+import { OperationsTab } from '../tabs/OperationsTab';
+import { ValuationTab } from '../tabs/ValuationTab';
 
 const tabs = [
   { id: 'overview', label: 'Overview', icon: Home },
@@ -44,7 +48,10 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
         </header>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8 max-w-7xl mx-auto w-full">
-          {children}
+          {activeTab === 'overview' && <OverviewTab />}
+          {activeTab === 'financials' && <FinancialsTab />}
+          {activeTab === 'operations' && <OperationsTab />}
+          {activeTab === 'valuation' && <ValuationTab />}
         </div>
       </main>
 
