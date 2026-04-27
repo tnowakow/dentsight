@@ -31,7 +31,7 @@ model Practice {
 model Patient {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   practiceId   String   @map("practice_id") @db.Uuid
-  patientHash  String   @map("patient_hash") @db.VarChar(64)
+  patientHash  String   @unique @map("patient_hash") @db.VarChar(64)
   ageBucket    String?  @map("age_bucket") @db.VarChar(20)
   gender       String?  @db.VarChar(10)
   insuranceType String? @map("insurance_type") @db.VarChar(100)
@@ -40,8 +40,6 @@ model Patient {
   practice      Practice @relation(fields: [practiceId], references: [id])
   appointments Appointment[]
   procedures   Procedure[]
-
-  @@unique([practiceId, patientHash])
   @@map("patients")
 }
 
