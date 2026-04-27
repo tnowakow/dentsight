@@ -46,9 +46,9 @@ model Patient {
 }
 
 model Appointment {
-  time            DateTime @map("time") @db.Timestamptz
-  practiceId      String   @map("practice_id") @
-  patientHash     String   @map("patient_hash") @db.VarChar(64)
+  time            DateTime @id @map("time") @db.Timestamptz
+  practiceId      String   @id @map("practice_id") @db.Uuid
+  patientHash     String   @id @map("patient_hash") @db.VarChar(64)
   appointmentType String?  @map("appointment_type") @db.VarChar(50)
   providerId      String?  @map("provider_id") @db.VarChar(100)
   status          String?  @db.VarChar(50)
