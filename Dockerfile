@@ -16,8 +16,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install system dependencies (removed postgresql-client - not needed without TimescaleDB)
-RUN apk add --no-cache python3 make g++
+# Install system dependencies including PostgreSQL client for seeding
+RUN apk add --no-cache python3 make g++ postgresql-client
 
 # Copy backend package files and prisma schema first
 COPY backend/package*.json ./backend/
