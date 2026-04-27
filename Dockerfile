@@ -21,7 +21,10 @@ RUN apk add --no-cache python3 make g++
 
 # Copy backend package files
 COPY backend/package*.json ./backend/
-RUN cd backend && npm install --production
+RUN cd backend && npm install
+
+# Generate Prisma client (required for @prisma/client to work)
+RUN cd backend && npx prisma generate
 
 # Copy backend source code
 COPY backend/ ./backend/
