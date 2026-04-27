@@ -12,7 +12,7 @@ const tabs = [
   { id: 'valuation', label: 'Valuation', icon: Calculator },
 ] as const;
 
-export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AppLayout: React.FC<{ children?: React.ReactNode }> = () => {
   const { activeTab, setActiveTab } = useDentsightStore();
 
   return (
