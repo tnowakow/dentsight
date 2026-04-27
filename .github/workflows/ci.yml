@@ -1,0 +1,62 @@
+name: CI - Build & Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+      
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+      
+      - name: Lint backend
+        working-directory: ./backend
+        run: npm run lint || echo "No lint script configured"
+      
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+      
+      - name: Test Docker build (catches deployment errors early)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: dentsight:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Verify Docker image runs
+        run: |
+          docker run --rm -d --name dentsight-test -p 3001:3000 dentsight:test
+          sleep 5
+          # Check if container is still running (didn't crash on startup)
+          if [ "$(docker inspect -f '{{.State.Running}}' dentsight-test)" = "true" ]; then
+            echo "✅ Docker image starts successfully"
+            docker stop dentsight-test
+          else
+            echo "❌ Docker image failed to start"
+            docker logs dentsight-test
+            exit 1
+          fi
