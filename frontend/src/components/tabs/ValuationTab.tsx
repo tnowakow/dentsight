@@ -1,5 +1,6 @@
 import { mockData } from '../../data/mockData';
 import { InfoTooltip } from '../ui/InfoTooltip';
+import { formatNumber } from '../../utils/formatting';
 
 export const ValuationTab = () => {
   const { valuationDetails, addbacks } = mockData;
@@ -26,7 +27,7 @@ export const ValuationTab = () => {
           </div>
            <div className="flex justify-between items-center text-lg py-4 border-t border-slate-700">
             <span className="font-bold text-white">Normalized EBITDA</span>
-            <span className="text-2xl font-black text-blue-500">${valuationDetails.ebitda.toLocaleString()}</span>
+            <span className="text-2xl font-black text-blue-500">${formatNumber(valuationDetails.ebitda)}</span>
           </div>
         </div>
       </section>
@@ -47,9 +48,47 @@ export const ValuationTab = () => {
                 <h4 className="text-white font-medium">{item.name}</h4>
                 <span className="text-xs text-slate-500 uppercase tracking-wide">{item.category}</span>
               </div>
-              <span className="text-emerald-500 font-bold">+${item.amount.toLocaleString()}</span>
+              <span className="text-emerald-500 font-bold">+${formatNumber(item.amount)}</span>
             </div>
           ))}
+          {/* 4b. Total Add-Backs Summary */}
+          <div className="p-6 flex justify-between items-center bg-slate-800/30 font-bold">
+            <span className="text-white">Total Add-Backs</span>
+            <span className="text-emerald-400 text-lg">+${formatNumber(addbacks.reduce((sum, item) => sum + item.amount, 0))}</span>
+          </div>
+        </div>
+
+        {/* Owner Comp Normalization Note */}
+        <div className="p-6 border-t border-slate-800">
+          <div className="flex items-start gap-3">
+            <InfoTooltip
+              title="Owner Compensation Normalization"
+              description="Adjusts the owner's salary to a market-rate manager salary, since a new owner wouldn't pay themselves the same amount."
+              calculation="If owner takes below-market salary: add difference to EBITDA\nIf owner takes above-market salary: subtract difference from EBITDA\n\nThis ensures valuation reflects true practice earnings, not owner-specific compensation."
+              position="top-right" />
+            <p className="text-sm text-slate-400">
+              <span className="text-slate-200 font-medium">Owner Comp Normalization:</span> Owner salary adjusted to market rate for a practice manager. This add-back reflects the difference between what the current owner takes home vs. what a new owner would pay a hired manager.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* EBITDA Multiple Info */}
+      <section className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4 relative">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-white">Market Multiple</h3>
+          <InfoTooltip
+            title="EBITDA Multiple"
+            description="The multiplier applied to your normalized EBITDA to estimate practice value. Dental practices typically sell for 6-7x EBITDA."
+            calculation="Valuation = Normalized EBITDA × Market Multiple\n\nFactors affecting multiple:\n• Practice location and demographics\n• Growth trend (increasing EBITDA = higher multiple)\n• Provider tenure and retention\n• Production mix (insurance vs patient pay)\n\nCurrent multiple: {valuationDetails.marketMultiple.current}x" />
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-slate-400">Current Multiple</span>
+          <span className="text-2xl font-black text-blue-500">{valuationDetails.marketMultiple.current}x</span>
+        </div>
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-slate-400">Range</span>
+          <span className="text-white">{valuationDetails.marketMultiple.low}x — {valuationDetails.marketMultiple.high}x</span>
         </div>
       </section>
 
@@ -74,8 +113,8 @@ export const ValuationTab = () => {
 
             {/* Ticks/Markers */}
             <div className="absolute top-4 left-4 right-4 flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
-              <span>Low: ${valuationDetails.lowRange.toLocaleString()}</span>
-              <span>High: ${valuationDetails.highRange.toLocaleString()}</span>
+              <span>Low: ${formatNumber(valuationDetails.lowRange)}</span>
+              <span>High: ${formatNumber(valuationDetails.highRange)}</span>
             </div>
 
             {/* The "Most Likely" Marker */}
@@ -85,7 +124,7 @@ export const ValuationTab = () => {
             />
              <div className="mt-4 text-center">
                 <span className="text-xs font-medium text-slate-400 uppercase tracking-widest">Most Likely Value</span>
-                <p className="text-3xl font-black text-white mt-1">${valuationDetails.mostLikely.toLocaleString()}</p>
+                <p className="text-3xl font-black text-white mt-1">${formatNumber(valuationDetails.mostLikely)}</p>
              </div>
          </div>
 

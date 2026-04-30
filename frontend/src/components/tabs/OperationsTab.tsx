@@ -26,7 +26,7 @@ export const OperationsTab = () => {
               />
               <Bar dataKey="hourlyProduction" radius={[4, 4, 0, 0]}>
                 {mockData.providerProduction.map((entry, index) => (
-                  <rect key={`cell-${index}`} fill={entry.type === 'doctor' ? '#3b82f	6' : '#10b981'} />
+                  <rect key={`cell-${index}`} fill={entry.hourlyProduction >= entry.target ? '#10b981' : '#f59e0b'} />
                 ))}
               </Bar>
             </BarChart>

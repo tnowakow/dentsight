@@ -17,6 +17,7 @@ export interface ProviderProduction {
   name: string;
   hourlyProduction: number;
   type: 'doctor' | 'hygienist';
+  target: number;
 }
 
 export interface AppointmentMetric {
@@ -105,6 +106,7 @@ export const mockData: MockData = {
     unscheduledTreatmentValue: 45000,
     noShowRate: 8.5,
     caseAcceptance: 72,
+    dso: 42,
   },
   valuationPreview: '$3.15M - $3.40M',
   hygieneTrend: [
@@ -116,10 +118,10 @@ export const mockData: MockData = {
     { date: 'Jun', value: 83 },
   ],
   providerProduction: [
-    { name: 'Dr. Smith', hourlyProduction: 450, type: 'doctor' },
-    { name: 'Dr. Jones', hourlyProduction: 380, type: 'doctor' },
-    { name: 'Hygienist Sarah', hourlyProduction: 120, type: 'hygienist' },
-    { name: 'Hygienist Mike', hourlyProduction: 115, type: 'hygienist' },
+    { name: 'Dr. Smith', hourlyProduction: 450, type: 'doctor', target: 400 },
+    { name: 'Dr. Jones', hourlyProduction: 380, type: 'doctor', target: 400 },
+    { name: 'Hygienist Sarah', hourlyProduction: 120, type: 'hygienist', target: 100 },
+    { name: 'Hygienist Mike', hourlyProduction: 115, type: 'hygienist', target: 100 },
   ],
   appointmentMetrics: [
     { metric: 'No-show Rate', currentValue: '8.5%', trend: 'up', benchmark: '7%' },

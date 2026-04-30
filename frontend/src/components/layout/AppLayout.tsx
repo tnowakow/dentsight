@@ -1,5 +1,5 @@
 import { useDentsightStore } from '../../store/useDentsightStore';
-import { Home, Activity, DollarSign, Calculator } from 'lucide-react';
+import { Home, Activity, DollarSign, Calculator, Calendar } from 'lucide-react';
 import { OverviewTab } from '../tabs/OverviewTab';
 import { FinancialsTab } from '../tabs/FinancialsTab';
 import { OperationsTab } from '../tabs/OperationsTab';
@@ -13,7 +13,7 @@ const tabs = [
 ] as const;
 
 export const AppLayout: React.FC<{ children?: React.ReactNode }> = () => {
-  const { activeTab, setActiveTab } = useDentsightStore();
+  const { activeTab, setActiveTab, dateFilter, setDateFilter } = useDentsightStore();
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-slate-950 text-slate-50">
@@ -28,8 +28,8 @@ export const AppLayout: React.FC<{ children?: React.ReactNode }> = () => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === tab.id 
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-90/20' 
+                activeTab === tab.id
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-90/20'
                   : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
               }`}
             >
@@ -55,8 +55,47 @@ export const AppLayout: React.FC<{ children?: React.ReactNode }> = () => {
         </div>
       </main>
 
+      {/* Right Rail - Date Filter (Desktop Only) */}
+      <aside className="hidden lg:flex w-56 flex-col border-l border-slate-800 p-6 space-y-6 bg-slate-950">
+        <div className="space-y-4">
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Date Filter</h3>
+          <div className="space-y-2">
+            {(['this-week', 'this-month'] as const).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setDateFilter(filter)}
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
+                  dateFilter === filter
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                }`}
+              >
+                <Calendar className="w-4 h-4" />
+                <span className="font-medium">
+                  {filter === 'this-week' ? 'This Week' : 'This Month'}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-slate-800 space-y-3">
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Filter</h3>
+          <div className="bg-slate-900 rounded-lg p-3 border border-slate-800">
+            <p className="text-sm text-slate-200 font-medium">
+              {dateFilter === 'this-week' ? 'This Week' : 'This Month'}
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              {dateFilter === 'this-week'
+                ? 'Showing data for the current week'
+                : 'Showing data for the current month'}
+            </p>
+          </div>
+        </div>
+      </aside>
+
       {/* Bottom Nav for Mobile */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 border-t border-slate-80	0 bg-slate-950/90 backdrop-blur-lg flex items-center justify-around px-2 z-40">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 border-t border-slate-800 bg-slate-950/90 backdrop-blur-lg flex items-center justify-around px-2 z-40">
         {tabs.map((tab) => (
           <button
             key={tab.id}

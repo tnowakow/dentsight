@@ -2,6 +2,7 @@ import { mockData } from '../../data/mockData';
 import { AlertCard } from '../ui/AlertCard';
 import { BenchmarkIndicator } from '../ui/BenchmarkIndicator';
 import { InfoTooltip } from '../ui/InfoTooltip';
+import { formatCurrency, formatPercent } from '../../utils/formatting';
 
 export const OverviewTab = () => {
   return (
@@ -23,14 +24,14 @@ export const OverviewTab = () => {
 
       {/* 2. Practice Health Score Summary */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 1c. Health Score — numeric score, separator, verdict, chevron */}
         <div className="lg:col-span-1 bg-slate-900 p-8 rounded-2xl border border-slate-800 flex flex-col items-center justify-center text-center space-y-4">
           <h3 className="text-slate-400 font-medium uppercase text-xs tracking-widest">Health Score</h3>
-          <div className="relative flex items-center justify-center">
-            {/* Simple CSS Gauge approximation */}
-            <div className="w-32 h-32 rounded-full border-[12px] border-slate-800 flex items-center justify-center relative overflow-hidden">
-               <div className="absolute inset-0 border-[12px] border-blue-500 rounded-full" style={{ clipPath: 'inset(0 0 50% 0)' }} />
-               <span className="text-4xl font-bold">{mockData.healthScore}</span>
-            </div>
+          <div className="flex items-center gap-3">
+            <span className="text-5xl font-black text-white">{mockData.healthScore}/100</span>
+            <span className="text-slate-600 text-2xl">•</span>
+            <span className="text-xl font-semibold text-emerald-500">Needs Attention</span>
+            <span className="text-slate-500 ml-1">›</span>
           </div>
           <p className="text-sm text-slate-400">Overall practice stability is <span className="text-emerald-500 font-semibold">High</span></p>
         </div>
@@ -95,32 +96,39 @@ export const OverviewTab = () => {
 
          <div className="grid grid-cols-2 gap-4">
             {[
-              { label: 'Monthly Prod.', value: `$${mockData.quickStats.monthlyProduction.toLocaleString()}`, icon: '💰', 
+              { label: 'Monthly Prod.', value: formatCurrency(mockData.quickStats.monthlyProduction), icon: '💰', 
                 tooltip: {
                   title: 'Monthly Production',
                   description: 'Total gross production (value of all dental services rendered) for the current month.',
                   calculation: 'Sum of all completed procedures × their fee schedule values\n\nIncludes insurance, patient payments, and write-offs.'
                 }
               },
-              { label: 'Unscheduled', value: `$${mockData.quickStats.unscheduledTreatmentValue.toLocaleString()}`, icon: '⏳',
+              { label: 'Unscheduled', value: formatCurrency(mockData.quickStats.unscheduledTreatmentValue), icon: '⏳',
                 tooltip: {
                   title: 'Unscheduled Treatment Value',
                   description: 'Total dollar value of accepted treatment plans that have not yet been scheduled for completion.',
                   calculation: 'Sum of all accepted but unscheduled procedure values\n\nRepresents future production pipeline and practice capacity needs.'
                 }
               },
-              { label: 'No-Show Rate', value: `${mockData.quickStats.noShowRate}%`, icon: '❌',
+              { label: 'No-Show Rate', value: formatPercent(mockData.quickStats.noShowRate), icon: '❌',
                 tooltip: {
                   title: 'No-Show Rate',
                   description: 'Percentage of scheduled appointments where patients fail to appear or cancel without proper notice.',
                   calculation: '(No-Shows + Late Cancellations / Total Appointments) × 100\n\nTarget: Below 8% - high rates indicate scheduling or communication issues.'
                 }
               },
-              { label: 'Case Acceptance', value: `${mockData.quickStats.caseAcceptance}%`, icon: '✅',
+              { label: 'Case Acceptance', value: formatPercent(mockData.quickStats.caseAcceptance), icon: '✅',
                 tooltip: {
                   title: 'Case Acceptance Rate (Quick View)',
                   description: 'Current month\'s treatment plan acceptance rate - same metric as detailed KPI above.',
                   calculation: '(Accepted Treatment Value / Recommended Treatment Value) × 100'
+                }
+              },
+              { label: 'DSO', value: `${mockData.quickStats.dso} days`, icon: '📅',
+                tooltip: {
+                  title: 'Days Sales Outstanding (DSO)',
+                  description: 'Average number of days it takes to collect payment after a service is rendered. Lower is better.',
+                  calculation: '(Accounts Receivable / Total Credit Sales) × Number of Days\n\nTarget: Below 40 days. High DSO indicates slow collections or billing issues.'
                 }
               },
             ].map((stat, i) => (

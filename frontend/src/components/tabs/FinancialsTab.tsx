@@ -1,6 +1,7 @@
 import { mockData } from '../../data/mockData';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { InfoTooltip } from '../ui/InfoTooltip';
+import { formatPercent } from '../../utils/formatting';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
@@ -20,7 +21,7 @@ export const FinancialsTab = () => {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={mockData.denialRates} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={true} vertical={false} />
-              <XAxis type="number" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} unit="%" />
+              <XAxis type="number" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => formatPercent(v)} />
               <YAxis dataKey="payer" type="category" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} width={100} />
               <Tooltip 
                 cursor={{fill: '#1e293b'}}
@@ -90,11 +91,11 @@ export const FinancialsTab = () => {
             </div>
             <div className="p-4 bg-slate-950 rounded-xl border border-slate-800/50 flex justify-between items-center">
               <span className="text-sm text-slate-400">Supply Cost %</span>
-              <span className="text-xl font-	bold text-white">{mockData.costAnalysis.supplyCostPercent}%</span>
+              <span className="text-xl font-bold text-white">{formatPercent(mockData.costAnalysis.supplyCostPercent)}</span>
             </div>
             <div className="p-4 bg-slate-950 rounded-xl border border-slate-800/50 flex justify-between items-center">
               <span className="text-sm text-slate-400">Lab Fee %</span>
-              <span className="text-xl font-bold text-white">{mockData.costAnalysis.labFeePercent}%</span>
+              <span className="text-xl font-bold text-white">{formatPercent(mockData.costAnalysis.labFeePercent)}</span>
             </div>
           </div>
         </section>
