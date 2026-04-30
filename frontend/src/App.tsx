@@ -9,10 +9,7 @@ import {
   ChevronLeft, ChevronRight, Menu, X
 } from 'lucide-react';
 
-// ============================================================================
-// GLOBAL TOP HEADER BAR (Section 4 of spec)
-// ============================================================================
-
+// DENTSIGHT UI REFACTOR - Global Header (Confirmed Top Nav and Mobile Menu)
 const GlobalHeader = () => {
   const { dateFilter, setDateFilter } = useDentsightStore();
   const location = useLocation();
