@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
-type Tab = 'overview' | 'operations' | 'financials' | 'valuation';
-type DateFilter = 'today' | 'this-week' | 'this-month' | 'last-month' | 'this-quarter' | 'ytd' | 'custom';
+export type Tab = 'overview' | 'operations' | 'financials' | 'valuation';
+export type DateFilter = 'today' | 'this-week' | 'this-month' | 'last-month' | 'this-quarter' | 'ytd' | 'custom';
 
 interface DentsightState {
   activeTab: Tab;
