@@ -60,6 +60,7 @@ export interface MockData {
     unscheduledTreatmentValue: number;
     noShowRate: number;
     caseAcceptance: number;
+    dso: number;
   };
   valuationPreview: string;
   hygieneTrend: MetricPoint[];

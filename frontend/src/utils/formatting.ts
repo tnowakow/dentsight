@@ -25,7 +25,6 @@ export const formatPercent = (value: number): string => {
     style: 'percent',
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-    percentSign: 'standard',
   }).format(value / 100);
 };
 
