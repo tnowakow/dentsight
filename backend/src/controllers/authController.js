@@ -2,7 +2,10 @@ const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required. Set it in your .env file.');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 exports.login = async (req, res) => {
   try {
@@ -14,7 +17,16 @@ exports.login = async (req, res) => {
       where: { practiceHash: practice_hash }
     });
 
-    if (!practice || password !== 'password123') {
+    // Get expected password from environment or use a secure mock for demo
+    const DEMO_PASSWORD = process.env.DEMO_LOGIN_PASSWORD || 'demo-password-change-me';
+    
+    if (!practice) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    // In production, verify against hashed password stored in database
+    // For demo purposes, validate against configurable environment variable
+    if (password !== DEMO_PASSWORD) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
