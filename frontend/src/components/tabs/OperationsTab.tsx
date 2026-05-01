@@ -1,5 +1,5 @@
 import { mockData } from '../../data/mockData';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, ReferenceArea } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, ReferenceArea, Cell } from 'recharts';
 import { InfoTooltip } from '../ui/InfoTooltip';
 
 export const OperationsTab = () => {
@@ -28,9 +28,12 @@ export const OperationsTab = () => {
               <Bar 
                 dataKey="hourlyProduction" 
                 radius={[4, 4, 0, 0]}
-                fill="#3b82f6"
                 maxBarSize={50}
-              />
+              >
+                {mockData.providerProduction.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.hourlyProduction >= entry.target ? '#10b981' : '#f59e0b'} />
+                ))}
+              </Bar>
             
             </BarChart>
           </ResponsiveContainer>

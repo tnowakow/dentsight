@@ -313,17 +313,32 @@ const CompactHealthScore = () => {
 // ============================================================================
 
 const RightRail = () => {
+  const { dateFilter } = useDentsightStore();
   const today = new Date();
   const formattedDate = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
   
   // Get high-priority alerts for the rail
   const priorities = mockData.alerts.filter(a => a.severity <= 2);
+  
+  // Map date filter to display text
+  const getDateFilterDisplayText = (filter: DateFilter) => {
+    switch (filter) {
+      case 'today': return "Today's Priorities";
+      case 'this-week': return "This Week's Priorities";
+      case 'this-month': return "This Month's Priorities";
+      case 'last-month': return "Last Month's Priorities";
+      case 'this-quarter': return "This Quarter's Priorities";
+      case 'ytd': return "Year to Date's Priorities";
+      case 'custom': return "Custom Range Priorities";
+      default: return "This Week's Priorities";
+    }
+  };
 
   return (
     <aside className="w-80 flex-shrink-0 space-y-6">
       {/* Date & Active Range */}
       <div className="bg-slate-900 rounded-xl border border-slate-800 p-4">
-        <h3 className="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-1">This Week</h3>
+        <h3 className="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-1">{getDateFilterDisplayText(dateFilter)}</h3>
         <p className="text-white font-medium">{formattedDate}</p>
         <p className="text-xs text-slate-500 mt-1">Active range: Last 7 days</p>
       </div>
