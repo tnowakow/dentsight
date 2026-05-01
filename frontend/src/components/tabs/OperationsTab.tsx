@@ -21,12 +21,21 @@ export const OperationsTab = () => {
               <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
               <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#f8fafc' }}
+                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#3b82f6', color: '#f8fafc', borderRadius: '8px' }}
                 itemStyle={{ color: '#3b82f6' }}
+                cursor={{ fill: '#1e293b', opacity: 0.4 }}
               />
-              <Bar dataKey="hourlyProduction" radius={[4, 4, 0, 0]}>
+              <Bar 
+                dataKey="hourlyProduction" 
+                radius={[4, 4, 0, 0]}
+                fill="#3b82f6"
+                maxBarSize={50}
+              >
                 {mockData.providerProduction.map((entry, index) => (
-                  <rect key={`cell-${index}`} fill={entry.hourlyProduction >= entry.target ? '#10b981' : '#f59e0b'} />
+                  <cell 
+                    key={`cell-${index}`} 
+                    fill={entry.hourlyProduction >= entry.target ? '#10b981' : '#3b82f6'} 
+                  />
                 ))}
               </Bar>
             </BarChart>
