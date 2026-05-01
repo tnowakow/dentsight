@@ -30,7 +30,6 @@ export const OperationsTab = () => {
                 radius={[4, 4, 0, 0]}
                 fill="#3b82f6"
                 maxBarSize={50}
-                fill={({ entry }) => entry.hourlyProduction >= entry.target ? '#10b981' : '#3b82f6'}
               />
             
             </BarChart>
