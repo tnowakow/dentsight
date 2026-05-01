@@ -30,14 +30,9 @@ export const OperationsTab = () => {
                 radius={[4, 4, 0, 0]}
                 fill="#3b82f6"
                 maxBarSize={50}
-              >
-                {mockData.providerProduction.map((entry, index) => (
-                  <cell 
-                    key={`cell-${index}`} 
-                    fill={entry.hourlyProduction >= entry.target ? '#10b981' : '#3b82f6'} 
-                  />
-                ))}
-              </Bar>
+                fill={({ entry }) => entry.hourlyProduction >= entry.target ? '#10b981' : '#3b82f6'}
+              />
+            
             </BarChart>
           </ResponsiveContainer>
         </div>
