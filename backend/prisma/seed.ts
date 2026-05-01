@@ -33,17 +33,25 @@ async function main() {
   const practiceName = 'Bright Smile Dental'
   const practiceHash = createHash(practiceName)
   
-  const practice = await prisma.practice.create({
-    data: {
-      name: practiceName,
-      practiceHash,
-      ownerName: 'Dr. Sarah Mitchell',
-      locationCity: 'Ann Arbor',
-      locationState: 'MI',
-      subscriptionTier: 'founding',
-    },
-  })
+  let practice = await prisma.practice.findUnique({
+    where: { practiceHash: practiceHash },
+  });
 
+  if (!practice) {
+    practice = await prisma.practice.create({
+      data: {
+        name: practiceName,
+        practiceHash,
+        ownerName: 'Dr. Sarah Mitchell',
+        locationCity: 'Ann Arbor',
+        locationState: 'MI',
+        subscriptionTier: 'founding',
+      },
+    });
+    console.log(`✅ Created practice: ${practice.name}`);
+  } else {
+    console.log(`❕ Practice '${practice.name}' already exists, skipping creation.`);
+  }
   console.log(`✅ Created practice: ${practice.name}`)
 
   // Create patients (50 patients)

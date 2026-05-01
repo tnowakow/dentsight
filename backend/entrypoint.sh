@@ -3,16 +3,11 @@
 # Run Prisma migrations if DATABASE_URL is set
 if [ -n "$DATABASE_URL" ]; then
   echo "Running database migrations..."
-  cd /app/backend && npx prisma migrate deploy --schema=./prisma/schema.prisma || true
+  cd /app/backend && npx prisma migrate deploy --schema=./prisma/schema.prisma
   
-  # Seed the database if it's empty (check for any practices)
-  PRACTICE_COUNT=$(psql $DATABASE_URL -t -c "SELECT COUNT(*) FROM practices" | tr -d ' ')
-  if [ "$PRACTICE_COUNT" = "0" ]; then
-    echo "Database is empty, seeding with demo data..."
-    cd /app/backend && npx ts-node prisma/seed.ts || true
-  else
-    echo "Database already has data, skipping seed"
-  fi
+  # Seed the database (the seed script handles idempotency)
+  echo "Seeding database with demo data..."
+  cd /app/backend && npx ts-node prisma/seed.ts
 fi
 
 # Start the application
