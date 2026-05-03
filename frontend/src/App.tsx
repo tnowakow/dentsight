@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import { useDentsightStore, type DateFilter } from './store/useDentsightStore';
 import { mockData } from './data/mockData';
 import { formatCurrency } from './utils/formatting';
+import { CompanySelector } from './components/CompanySelector';
 import { 
   Home, Activity, DollarSign, Calculator, ChevronDown, Calendar, HelpCircle, 
   AlertTriangle, CheckCircle2, Info, ArrowRight, TrendingUp, Clock, DollarSign as DollarIcon,
@@ -11,10 +12,9 @@ import {
 
 // DENTSIGHT UI REFACTOR - Global Header (Confirmed Top Nav and Mobile Menu)
 const GlobalHeader = () => {
-  const { dateFilter, setDateFilter } = useDentsightStore();
+  const { dateFilter, setDateFilter, selectedCompanyId } = useDentsightStore();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [practiceDropdownOpen, setPracticeDropdownOpen] = useState(false);
   const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
 
   const dateOptions: { value: DateFilter; label: string }[] = [
@@ -27,7 +27,14 @@ const GlobalHeader = () => {
     { value: 'custom', label: 'Custom Range' },
   ];
 
-  const practices = ['Smile Dental Practice', 'Downtown Family Dentistry', 'Bright Smiles Clinic'];
+  // Refetch data when selected company changes
+  useEffect(() => {
+    if (selectedCompanyId) {
+      console.log(`Company changed to ID: ${selectedCompanyId} - triggering data refetch`);
+      // Dashboard components will automatically refetch via their own useEffect hooks
+      // that watch the store's selectedCompanyId
+    }
+  }, [selectedCompanyId]);
 
   // TODO: pass range to API - currently just logging for now
   useEffect(() => {
@@ -46,37 +53,14 @@ const GlobalHeader = () => {
       {/* Desktop Header */}
       <header className="hidden md:block h-16 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
         <div className="h-full max-w-[1920px] mx-auto px-4 flex items-center justify-between">
-          {/* Left: Logo + Practice Selector */}
+          {/* Left: Logo + Company Selector */}
           <div className="flex items-center gap-6">
             <Link to="/" className="text-xl font-bold bg-gradient-to-r from-blue-500 to-emerald-500 bg-clip-text text-transparent">
               Dentsight
             </Link>
             
-            {/* Practice Selector Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setPracticeDropdownOpen(!practiceDropdownOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors"
-              >
-                <span className="text-sm text-slate-300">Smile Dental Practice</span>
-                <ChevronDown className="w-4 h-4 text-slate-500" />
-              </button>
-              {practiceDropdownOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setPracticeDropdownOpen(false)} />
-                  <div className="absolute top-full left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-xl z-20 py-1">
-                    {practices.map((practice) => (
-                      <button
-                        key={practice}
-                        className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 transition-colors"
-                      >
-                        {practice}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+            {/* Company Selector Component */}
+            <CompanySelector />
           </div>
 
           {/* Center: Navigation */}
