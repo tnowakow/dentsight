@@ -9,7 +9,7 @@ import { formatCurrency, formatPercent } from '../../utils/formatting';
 export const OverviewTab = () => {
   const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
   const [isLoading, setIsLoading] = useState(true);
-  const [alerts, setAlerts] = useState([]);
+  const [alerts, setAlerts] = useState<any[]>([]);
   const [metrics, setMetrics] = useState<any[]>([]);
   const [valuation, setValuation] = useState<any>(null);
 

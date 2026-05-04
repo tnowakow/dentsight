@@ -30,8 +30,8 @@ export const FinancialsTab = () => {
   const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
   const [isLoading, setIsLoading] = useState(true);
   const [denialRates, setDenialRates] = useState(defaultDenialRates);
-  const [productionBreakdown, setProductionBreakdown] = useState(defaultProductionBreakdown);
-  const [costAnalysis, setCostAnalysis] = useState(defaultCostAnalysis);
+  const [productionBreakdown] = useState(defaultProductionBreakdown);
+  const [costAnalysis] = useState(defaultCostAnalysis);
 
   useEffect(() => {
     if (!selectedCompanyId) return;

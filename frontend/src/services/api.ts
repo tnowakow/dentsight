@@ -220,9 +220,9 @@ export async function fetchOperationsData(companyId?: string): Promise<any> {
     };
   }
 
-  // For now, fetch metrics and transform them
-  const metrics = await fetchMetrics(companyId);
-  
+  // Fetch metrics - reserved for future transformation
+  await fetchMetrics(companyId);
+
   return {
     denialRates: [],
     appointmentMetrics: [],

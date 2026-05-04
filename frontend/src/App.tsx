@@ -227,19 +227,8 @@ const PriorityCard: React.FC<PriorityCardProps> = ({ icon, headline, subtext, ct
 const CompactHealthScore = () => {
   const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
   const [expanded, setExpanded] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [healthScore, setHealthScore] = useState(84); // Default fallback
-  
-  useEffect(() => {
-    if (!selectedCompanyId) return;
-    
-    setIsLoading(true);
-    // Health score would be calculated from metrics fetched from backend
-    // For now, using a default value - can be enhanced later
-    setHealthScore(84);
-    setIsLoading(false);
-  }, [selectedCompanyId]);
-  
+  const healthScore = 84; // TODO: calculate from metrics API
+
   const healthMetrics = [
     { name: 'Net Collection Rate', score: 94, weight: 20, target: 92 },
     { name: 'Hygiene Re-appointment', score: 78, weight: 25, target: 85 },
@@ -256,7 +245,7 @@ const CompactHealthScore = () => {
     return { text: 'Critical', color: 'text-red-500' };
   };
 
-  const verdict = getVerdict(overallScore);
+  const verdict = getVerdict(healthScore);
 
   return (
     <div className="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
@@ -266,7 +255,7 @@ const CompactHealthScore = () => {
         className="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors"
       >
         <div className="flex items-center gap-4">
-          <span className="text-3xl font-black text-white">{overallScore}</span>
+          <span className="text-3xl font-black text-white">{healthScore}</span>
           <span className="text-slate-600 text-xl">•</span>
           <span className={`font-semibold ${verdict.color}`}>{verdict.text}</span>
         </div>
