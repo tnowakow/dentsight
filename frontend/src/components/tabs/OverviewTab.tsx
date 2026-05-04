@@ -114,7 +114,7 @@ export const OverviewTab = () => {
         <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
             { label: 'Net Collection Rate', value: '94%', trend: 'up' as const, target: '92%' },
-            { label: 'Hygiene Re-appointment', value: '78%', trend: 'down' as const, target: '85%' },
+            { label: 'Cost by Chair Hour', value: '$42/hr', trend: 'stable' as const, target: '$50/hr' },
             { label: 'Denial Rate', value: '5.4%', trend: 'stable' as const, target: '5%' },
             { label: 'Case Acceptance', value: '72%', trend: 'up' as const, target: '70%' }
           ].map((kpi, i) => {
@@ -124,10 +124,10 @@ export const OverviewTab = () => {
                 description: 'Percentage of total production actually collected from patients and insurance companies.',
                 calculation: '(Total Collections / Total Production) × 100\n\nTarget: 95%+ indicates efficient billing and collections process.'
               },
-              'Hygiene Re-appointment': {
-                title: 'Hygiene Re-appointment Rate',
-                description: 'Percentage of hygiene patients who book their next cleaning before leaving the office.',
-                calculation: '(Patients with Future Hygiene Appointments / Total Hygiene Completions) × 100\n\nTarget: 85%+ ensures consistent patient flow and retention.'
+              'Cost by Chair Hour': {
+                title: 'Cost per Chair Hour',
+                description: 'Average overhead cost per hour of chair time. Measures practice efficiency and overhead management.',
+                calculation: 'Total Overhead ÷ Total Chair Hours\n\nTarget: $40-50/hr indicates efficient operations. Higher values suggest overhead optimization needed.'
               },
               'Denial Rate': {
                 title: 'Claim Denial Rate',
