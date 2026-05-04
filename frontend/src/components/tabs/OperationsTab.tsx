@@ -1,8 +1,83 @@
-import { mockData } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { useDentsightStore } from '../../store/useDentsightStore';
+import { fetchMetricTrend, fetchOperationsData } from '../../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, ReferenceArea, Cell } from 'recharts';
 import { InfoTooltip } from '../ui/InfoTooltip';
 
+// Default mock data for fallback
+const defaultProviderProduction = [
+  { name: 'Dr. Smith', hourlyProduction: 425, target: 400 },
+  { name: 'Dr. Johnson', hourlyProduction: 380, target: 400 },
+  { name: 'Hygienist A', hourlyProduction: 115, target: 100 },
+  { name: 'Hygienist B', hourlyProduction: 95, target: 100 },
+];
+
+const defaultAppointmentMetrics = [
+  { metric: 'No-Show Rate', currentValue: '8.5%', trend: 'down', benchmark: '<8%' },
+  { metric: 'Cancellation Rate', currentValue: '7.2%', trend: 'up', benchmark: '<10%' },
+  { metric: 'Case Acceptance', currentValue: '68%', trend: 'down', benchmark: '>70%' },
+];
+
+const defaultHygieneTrend = [
+  { date: 'Jan', value: 78 },
+  { date: 'Feb', value: 81 },
+  { date: 'Mar', value: 83 },
+  { date: 'Apr', value: 82 },
+];
+
 export const OperationsTab = () => {
+  const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
+  const [isLoading, setIsLoading] = useState(true);
+  const [providerProduction, setProviderProduction] = useState(defaultProviderProduction);
+  const [appointmentMetrics, setAppointmentMetrics] = useState(defaultAppointmentMetrics);
+  const [hygieneTrend, setHygieneTrend] = useState(defaultHygieneTrend);
+
+  useEffect(() => {
+    if (!selectedCompanyId) return;
+
+    setIsLoading(true);
+    
+    const fetchData = async () => {
+      try {
+        // Fetch operations data
+        const opsData = await fetchOperationsData(selectedCompanyId);
+        
+        // Update state with fetched data if available
+        if (opsData?.providerProduction && opsData.providerProduction.length > 0) {
+          setProviderProduction(opsData.providerProduction);
+        }
+        if (opsData?.appointmentMetrics && opsData.appointmentMetrics.length > 0) {
+          setAppointmentMetrics(opsData.appointmentMetrics);
+        }
+
+        // Fetch hygiene trend specifically
+        const trendData = await fetchMetricTrend('hygiene-recare', selectedCompanyId, 12);
+        if (trendData && trendData.length > 0) {
+          setHygieneTrend(trendData.map((d: any) => ({
+            date: new Date(d.metricDate).toLocaleString('default', { month: 'short' }),
+            value: d.metricValue
+          })));
+        }
+      } catch (error) {
+        console.error('Error fetching operations data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [selectedCompanyId]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-slate-400">Loading operations data...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* 1. Provider Hourly Production */}
@@ -16,7 +91,7 @@ export const OperationsTab = () => {
         </div>
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={mockData.providerProduction} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <BarChart data={providerProduction} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
               <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
               <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
@@ -30,7 +105,7 @@ export const OperationsTab = () => {
                 radius={[4, 4, 0, 0]}
                 maxBarSize={50}
               >
-                {mockData.providerProduction.map((entry, index) => (
+                {providerProduction.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.hourlyProduction >= entry.target ? '#10b981' : '#f59e0b'} />
                 ))}
               </Bar>
@@ -60,7 +135,7 @@ export const OperationsTab = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800 text-sm">
-              {mockData.appointmentMetrics.map((metric, i) => (
+              {appointmentMetrics.map((metric, i) => (
                 <tr key={i} className="hover:bg-slate-800/30 transition-colors">
                   <td className="px-6 py-4 font-medium text-slate-200">{metric.metric}</td>
                   <td className="px-6 py-4 text-white font-bold">{metric.currentValue}</td>
@@ -88,7 +163,7 @@ export const OperationsTab = () => {
         </div>
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={mockData.hygieneTrend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <LineChart data={hygieneTrend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
               <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
               <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} unit="%" />

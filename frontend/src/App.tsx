@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { useDentsightStore, type DateFilter } from './store/useDentsightStore';
-import { mockData } from './data/mockData';
+import { fetchAlerts, fetchValuation } from './services/api';
 import { formatCurrency } from './utils/formatting';
 import { CompanySelector } from './components/CompanySelector';
 import { 
@@ -225,7 +225,20 @@ const PriorityCard: React.FC<PriorityCardProps> = ({ icon, headline, subtext, ct
 // ============================================================================
 
 const CompactHealthScore = () => {
+  const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
   const [expanded, setExpanded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [healthScore, setHealthScore] = useState(84); // Default fallback
+  
+  useEffect(() => {
+    if (!selectedCompanyId) return;
+    
+    setIsLoading(true);
+    // Health score would be calculated from metrics fetched from backend
+    // For now, using a default value - can be enhanced later
+    setHealthScore(84);
+    setIsLoading(false);
+  }, [selectedCompanyId]);
   
   const healthMetrics = [
     { name: 'Net Collection Rate', score: 94, weight: 20, target: 92 },
@@ -235,8 +248,6 @@ const CompactHealthScore = () => {
     { name: 'No-Show Rate', score: 85, weight: 10, target: 92 }, // Inverted
     { name: 'Provider Utilization', score: 88, weight: 10, target: 85 },
   ];
-
-  const overallScore = mockData.healthScore;
   
   const getVerdict = (score: number) => {
     if (score >= 90) return { text: 'Excellent', color: 'text-emerald-500' };
@@ -297,12 +308,17 @@ const CompactHealthScore = () => {
 // ============================================================================
 
 const RightRail = () => {
-  const { dateFilter } = useDentsightStore();
+  const { dateFilter, selectedCompanyId } = useDentsightStore();
+  const [priorities, setPriorities] = useState<any[]>([]);
   const today = new Date();
   const formattedDate = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-  
-  // Get high-priority alerts for the rail
-  const priorities = mockData.alerts.filter(a => a.severity <= 2);
+
+  useEffect(() => {
+    if (!selectedCompanyId) return;
+    fetchAlerts(selectedCompanyId, false)
+      .then(data => setPriorities((data || []).filter((a: any) => a.severity <= 2).slice(0, 4)))
+      .catch(() => {});
+  }, [selectedCompanyId]);
   
   // Map date filter to display text
   const getDateFilterDisplayText = (filter: DateFilter) => {
@@ -361,13 +377,69 @@ const RightRail = () => {
 // ============================================================================
 
 const OverviewTab = () => {
+  const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
+  const [isLoading, setIsLoading] = useState(true);
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [valuationPreview, setValuationPreview] = useState('$3.15M - $3.40M');
+  const [quickStats, setQuickStats] = useState<any>({});
+
+  useEffect(() => {
+    if (!selectedCompanyId) return;
+
+    setIsLoading(true);
+    
+    const fetchData = async () => {
+      try {
+        // Fetch alerts (unresolved only)
+        const alertsData = await fetchAlerts(selectedCompanyId, false);
+        setAlerts(alertsData || []);
+
+        // Fetch valuation for preview
+        const valuationData = await fetchValuation(selectedCompanyId);
+        if (valuationData?.valuation_range) {
+          setValuationPreview(
+            `${formatCurrency(valuationData.valuation_range.low)} - ${formatCurrency(valuationData.valuation_range.high)}`
+          );
+        }
+        if (valuationData) {
+          setQuickStats({
+            monthlyProduction: valuationData.revenue ? Math.round(valuationData.revenue / 12) : null,
+            unscheduledTreatmentValue: null,
+            noShowRate: null,
+            caseAcceptance: null,
+            dso: null,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching overview data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [selectedCompanyId]);
+
   // Convert alerts to priorities for hero section
-  const priorityAlerts = mockData.alerts.map(alert => ({
-    ...alert,
-    ctaText: alert.type === 'warning' ? 'Address Issue' : 'View Details',
+  const priorityAlerts = alerts.map(alert => ({
+    id: alert.id,
+    headline: alert.headline || alert.description,
+    subtext: alert.subtext || '',
+    type: alert.type || 'info',
+    severity: alert.severity || 2,
+    ctaText: (alert.type === 'warning' || alert.severity === 1) ? 'Address Issue' : 'View Details',
     ctaPath: `/priorities/${alert.id}`,
-    severity: alert.severity === 1 ? 'high' as const : alert.severity === 2 ? 'medium' as const : 'low' as const,
   }));
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-slate-400">Loading overview data...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -432,7 +504,7 @@ const OverviewTab = () => {
       {/* 4. Valuation Preview Card */}
       <section className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-xl text-white space-y-4 shadow-xl shadow-blue-900/20">
         <h3 className="text-blue-100 font-medium uppercase text-xs tracking-widest">Valuation Range Preview</h3>
-        <div className="text-4xl font-bold">{mockData.valuationPreview}</div>
+        <div className="text-4xl font-bold">{valuationPreview}</div>
         <Link to="/valuation" className="inline-block text-sm bg-white/20 hover:bg-white/30 transition-colors px-4 py-2 rounded-lg font-semibold backdrop-blur-md">
           View Detailed Valuation →
         </Link>
@@ -441,11 +513,11 @@ const OverviewTab = () => {
       {/* 5. Quick Stats Grid */}
       <section className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: 'Monthly Prod.', value: formatCurrency(mockData.quickStats.monthlyProduction), icon: DollarIcon },
-          { label: 'Unscheduled', value: formatCurrency(mockData.quickStats.unscheduledTreatmentValue), icon: Clock },
-          { label: 'No-Show Rate', value: `${mockData.quickStats.noShowRate}%`, icon: AlertTriangle },
-          { label: 'Case Acceptance', value: `${mockData.quickStats.caseAcceptance}%`, icon: CheckCircle2 },
-          { label: 'DSO', value: `${mockData.quickStats.dso} days`, icon: Calendar },
+          { label: 'Monthly Prod.', value: quickStats.monthlyProduction ? formatCurrency(quickStats.monthlyProduction) : '—', icon: DollarIcon },
+          { label: 'Unscheduled', value: quickStats.unscheduledTreatmentValue ? formatCurrency(quickStats.unscheduledTreatmentValue) : '—', icon: Clock },
+          { label: 'No-Show Rate', value: quickStats.noShowRate ? `${quickStats.noShowRate}%` : '—', icon: AlertTriangle },
+          { label: 'Case Acceptance', value: quickStats.caseAcceptance ? `${quickStats.caseAcceptance}%` : '—', icon: CheckCircle2 },
+          { label: 'DSO', value: quickStats.dso ? `${quickStats.dso} days` : '—', icon: Calendar },
         ].map((stat, i) => (
           <div key={i} className="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col items-center text-center">
             <stat.icon className="w-5 h-5 text-blue-500 mb-2" />

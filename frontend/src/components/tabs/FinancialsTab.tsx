@@ -1,13 +1,74 @@
-import { mockData } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { useDentsightStore } from '../../store/useDentsightStore';
+import { fetchOperationsData } from '../../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { InfoTooltip } from '../ui/InfoTooltip';
 import { formatPercent } from '../../utils/formatting';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
+// Default mock data for fallback
+const defaultDenialRates = [
+  { payer: 'United Healthcare', rate: 10.5 },
+  { payer: 'Delta Dental', rate: 4.2 },
+  { payer: 'Aetna', rate: 6.8 },
+  { payer: 'Cigna', rate: 3.1 },
+];
+
+const defaultProductionBreakdown = [
+  { label: 'Insurance', value: 75 },
+  { label: 'Patient Out-of-Pocket', value: 25 },
+];
+
+const defaultCostAnalysis = {
+  costPerChairHour: 42,
+  supplyCostPercent: 6.5,
+  labFeePercent: 8.2,
+};
+
 export const FinancialsTab = () => {
+  const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
+  const [isLoading, setIsLoading] = useState(true);
+  const [denialRates, setDenialRates] = useState(defaultDenialRates);
+  const [productionBreakdown, setProductionBreakdown] = useState(defaultProductionBreakdown);
+  const [costAnalysis, setCostAnalysis] = useState(defaultCostAnalysis);
+
+  useEffect(() => {
+    if (!selectedCompanyId) return;
+
+    setIsLoading(true);
+    
+    const fetchData = async () => {
+      try {
+        // Fetch operations data which includes denial rates and other metrics
+        const opsData = await fetchOperationsData(selectedCompanyId);
+        
+        // Update state with fetched data if available
+        if (opsData?.denialRates && opsData.denialRates.length > 0) {
+          setDenialRates(opsData.denialRates);
+        }
+      } catch (error) {
+        console.error('Error fetching financials data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [selectedCompanyId]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-slate-400">Loading financial data...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8 animate-	in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500">
       {/* 1. Denial Rate by Payer */}
       <section className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-6 relative">
         <div className="flex items-center justify-between">
@@ -19,7 +80,7 @@ export const FinancialsTab = () => {
         </div>
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={mockData.denialRates} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+            <BarChart data={denialRates} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={true} vertical={false} />
               <XAxis type="number" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => formatPercent(v)} />
               <YAxis dataKey="payer" type="category" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} width={100} />
@@ -28,7 +89,7 @@ export const FinancialsTab = () => {
                 contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#f8fafc' }}
               />
               <Bar dataKey="rate" radius={[0, 4, 4, 0]}>
-                {mockData.denialRates.map((entry, index) => (
+                {denialRates.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.rate > 8 ? '#f59e0b' : '#3b82f6'} />
                 ))}
               </Bar>
@@ -51,13 +112,13 @@ export const FinancialsTab = () => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={mockData.productionBreakdown}
+                  data={productionBreakdown}
                   innerRadius={60}
                   outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {mockData.productionBreakdown.map((_, index) => (
+                  {productionBreakdown.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -66,10 +127,10 @@ export const FinancialsTab = () => {
             </ResponsiveContainer>
           </div>
           <div className="flex justify-center gap-4 text-xs">
-            {mockData.productionBreakdown.map((item, i) => (
+            {productionBreakdown.map((item, i) => (
               <div key={i} className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                <span className="text-slate	4">{item.label}</span>
+                <span className="text-slate-400">{item.label}</span>
               </div>
             ))}
           </div>
@@ -87,15 +148,15 @@ export const FinancialsTab = () => {
           <div className="space-y-4">
             <div className="p-4 bg-slate-950 rounded-xl border border-slate-800/50 flex justify-between items-center">
               <span className="text-sm text-slate-400">Cost per Chair Hour</span>
-              <span className="text-xl font-bold text-white">${mockData.costAnalysis.costPerChairHour}</span>
+              <span className="text-xl font-bold text-white">${costAnalysis.costPerChairHour}</span>
             </div>
             <div className="p-4 bg-slate-950 rounded-xl border border-slate-800/50 flex justify-between items-center">
               <span className="text-sm text-slate-400">Supply Cost %</span>
-              <span className="text-xl font-bold text-white">{formatPercent(mockData.costAnalysis.supplyCostPercent)}</span>
+              <span className="text-xl font-bold text-white">{formatPercent(costAnalysis.supplyCostPercent)}</span>
             </div>
             <div className="p-4 bg-slate-950 rounded-xl border border-slate-800/50 flex justify-between items-center">
               <span className="text-sm text-slate-400">Lab Fee %</span>
-              <span className="text-xl font-bold text-white">{formatPercent(mockData.costAnalysis.labFeePercent)}</span>
+              <span className="text-xl font-bold text-white">{formatPercent(costAnalysis.labFeePercent)}</span>
             </div>
           </div>
         </section>

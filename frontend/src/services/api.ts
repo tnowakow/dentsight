@@ -1,8 +1,9 @@
 import { mockData, type MockData } from '../data/mockData';
 
+// Use mock data for local development when backend is not available
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA === 'true';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 // Company types
 export interface Company {
@@ -87,21 +88,144 @@ export async function fetchValuationDetails(companyId?: string): Promise<any> {
   return response.json();
 }
 
-export async function fetchOperationsData(companyId?: string): Promise<any> {
+// Fetch metrics for a company
+export async function fetchMetrics(companyId?: string, from?: string, to?: string): Promise<any[]> {
   if (useMockData) {
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return mockData.hygieneTrend;
+  }
+
+  let url = `${API_BASE_URL}/metrics`;
+  const params = new URLSearchParams();
+  
+  if (companyId) params.append('company_id', companyId);
+  if (from) params.append('from', from);
+  if (to) params.append('to', to);
+  
+  if (params.toString()) url += `?${params.toString()}`;
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch metrics: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+// Fetch alerts for a company
+export async function fetchAlerts(companyId?: string, resolved?: boolean): Promise<any[]> {
+  if (useMockData) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return mockData.alerts;
+  }
+
+  let url = `${API_BASE_URL}/alerts`;
+  const params = new URLSearchParams();
+  
+  if (companyId) params.append('company_id', companyId);
+  if (resolved !== undefined) params.append('resolved', resolved.toString());
+  
+  if (params.toString()) url += `?${params.toString()}`;
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch alerts: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+// Fetch valuation for a company
+export async function fetchValuation(companyId?: string): Promise<any> {
+  if (useMockData) {
+    await new Promise(resolve => setTimeout(resolve, 300));
     return {
-      denialRates: mockData.denialRates,
-      appointmentMetrics: mockData.appointmentMetrics,
+      ebitda: mockData.valuationDetails.ebitda,
+      valuation_range: {
+        low: mockData.valuationDetails.lowRange,
+        high: mockData.valuationDetails.highRange,
+        most_likely: mockData.valuationDetails.mostLikely
+      },
+      market_multiple: mockData.valuationDetails.marketMultiple,
+      addbacks_total: mockData.addbacks.reduce((sum, item) => sum + item.amount, 0),
+      disclaimer: mockData.valuationDetails.disclaimer
     };
   }
 
-  const url = companyId
-    ? `${API_BASE_URL}/operations?companyId=${companyId}`
-    : `${API_BASE_URL}/operations`;
+  let url = `${API_BASE_URL}/valuation`;
+  const params = new URLSearchParams();
+  
+  if (companyId) params.append('company_id', companyId);
+  
+  if (params.toString()) url += `?${params.toString()}`;
+  
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`Failed to fetch operations data: ${response.statusText}`);
+    throw new Error(`Failed to fetch valuation: ${response.statusText}`);
   }
   return response.json();
+}
+
+// Fetch practices for a company
+export async function fetchPractices(companyId?: string): Promise<any[]> {
+  if (useMockData) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return [
+      { id: '1', name: 'Main Practice Location', address: '123 Main St' }
+    ];
+  }
+
+  let url = `${API_BASE_URL}/practices`;
+  const params = new URLSearchParams();
+  
+  if (companyId) params.append('company_id', companyId);
+  
+  if (params.toString()) url += `?${params.toString()}`;
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch practices: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+// Fetch metric trend for a specific metric name
+export async function fetchMetricTrend(metricName: string, companyId?: string, months = 12): Promise<any[]> {
+  if (useMockData) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return mockData.hygieneTrend;
+  }
+
+  let url = `${API_BASE_URL}/metrics/trend/${encodeURIComponent(metricName)}`;
+  const params = new URLSearchParams();
+  
+  if (companyId) params.append('company_id', companyId);
+  params.append('months', months.toString());
+  
+  url += `?${params.toString()}`;
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch metric trend: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+// Fetch operations data (denial rates, appointment metrics)
+export async function fetchOperationsData(companyId?: string): Promise<any> {
+  if (useMockData) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return {
+      denialRates: mockData.denialRates,
+      appointmentMetrics: mockData.appointmentMetrics,
+      providerProduction: mockData.providerProduction
+    };
+  }
+
+  // For now, fetch metrics and transform them
+  const metrics = await fetchMetrics(companyId);
+  
+  return {
+    denialRates: [],
+    appointmentMetrics: [],
+    providerProduction: []
+  };
 }

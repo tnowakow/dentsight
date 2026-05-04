@@ -59,3 +59,27 @@ exports.updatePractice = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+// New function to get practices with optional company_id filtering
+exports.getPractices = async (req, res) => {
+  try {
+    const { company_id } = req.query;
+    
+    let where = {};
+    
+    // Filter by company_id if provided
+    if (company_id) {
+      where.companyId = company_id;
+    }
+
+    const practices = await prisma.practice.findMany({
+      where,
+      orderBy: { name: 'asc' }
+    });
+
+    res.json(practices);
+  } catch (error) {
+    console.error('Get Practices error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};

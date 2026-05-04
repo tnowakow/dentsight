@@ -1,9 +1,58 @@
-import { mockData } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { useDentsightStore } from '../../store/useDentsightStore';
+import { fetchValuation } from '../../services/api';
 import { InfoTooltip } from '../ui/InfoTooltip';
 import { formatNumber } from '../../utils/formatting';
 
 export const ValuationTab = () => {
-  const { valuationDetails, addbacks } = mockData;
+  const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
+  const [isLoading, setIsLoading] = useState(true);
+  const [valuationData, setValuationData] = useState<any>(null);
+
+  useEffect(() => {
+    if (!selectedCompanyId) return;
+
+    setIsLoading(true);
+    
+    const fetchValuationData = async () => {
+      try {
+        const data = await fetchValuation(selectedCompanyId);
+        setValuationData(data);
+      } catch (error) {
+        console.error('Error fetching valuation:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchValuationData();
+  }, [selectedCompanyId]);
+
+  // Default values for display when data is not available
+  const ebitda = valuationData?.ebitda || 485000;
+  const addbacksTotal = valuationData?.addbacks_total || 23000;
+  const lowRange = valuationData?.valuation_range?.low || 3150000;
+  const highRange = valuationData?.valuation_range?.high || 3400000;
+  const mostLikely = valuationData?.valuation_range?.most_likely || 3300000;
+  const marketMultiple = valuationData?.market_multiple || { low: 6.5, high: 7.0, current: 6.8 };
+  const disclaimer = valuationData?.disclaimer || 'Informational estimate only — not a certified appraisal';
+
+  // Mock addbacks for now (can be fetched from backend later)
+  const addbacks = [
+    { name: 'Owner Salary Adjustment', amount: 120000, category: 'Owner Comp' },
+    { name: 'Personal Vehicle Lease', amount: 8000, category: 'One-time expense' },
+    { name: 'Non-recurring Marketing', amount: 5000, category: 'Marketing' },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-slate-400">Loading valuation data...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -23,11 +72,11 @@ export const ValuationTab = () => {
           </div>
           <div className="flex justify-between items-center text-sm py-2 border-b border-slate-800/50">
              <span className="text-slate-4	4 font-medium uppercase tracking-wider text-[10px]">Total Add-backs</span>
-             <span className="font-bold text-emerald-500">+$23,000</span>
+             <span className="font-bold text-emerald-500">+${formatNumber(addbacksTotal)}</span>
           </div>
            <div className="flex justify-between items-center text-lg py-4 border-t border-slate-700">
             <span className="font-bold text-white">Normalized EBITDA</span>
-            <span className="text-2xl font-black text-blue-500">${formatNumber(valuationDetails.ebitda)}</span>
+            <span className="text-2xl font-black text-blue-500">${formatNumber(ebitda)}</span>
           </div>
         </div>
       </section>
@@ -84,11 +133,11 @@ export const ValuationTab = () => {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-slate-400">Current Multiple</span>
-          <span className="text-2xl font-black text-blue-500">{valuationDetails.marketMultiple.current}x</span>
+          <span className="text-2xl font-black text-blue-500">{marketMultiple.current}x</span>
         </div>
         <div className="flex justify-between items-center text-sm">
           <span className="text-slate-400">Range</span>
-          <span className="text-white">{valuationDetails.marketMultiple.low}x — {valuationDetails.marketMultiple.high}x</span>
+          <span className="text-white">{marketMultiple.low}x — {marketMultiple.high}x</span>
         </div>
       </section>
 
@@ -113,8 +162,8 @@ export const ValuationTab = () => {
 
             {/* Ticks/Markers */}
             <div className="absolute top-4 left-4 right-4 flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
-              <span>Low: ${formatNumber(valuationDetails.lowRange)}</span>
-              <span>High: ${formatNumber(valuationDetails.highRange)}</span>
+              <span>Low: ${formatNumber(lowRange)}</span>
+              <span>High: ${formatNumber(highRange)}</span>
             </div>
 
             {/* The "Most Likely" Marker */}
@@ -124,13 +173,13 @@ export const ValuationTab = () => {
             />
              <div className="mt-4 text-center">
                 <span className="text-xs font-medium text-slate-400 uppercase tracking-widest">Most Likely Value</span>
-                <p className="text-3xl font-black text-white mt-1">${formatNumber(valuationDetails.mostLikely)}</p>
+                <p className="text-3xl font-black text-white mt-1">${formatNumber(mostLikely)}</p>
              </div>
          </div>
 
          <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-lg">
             <p className="text-xs text-amber-500 font-medium leading-relaxed italic">
-              {valuationDetails.disclaimer}
+              {disclaimer}
             </p>
          </div>
       </section>
