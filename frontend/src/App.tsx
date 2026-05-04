@@ -467,10 +467,10 @@ const OverviewTab = () => {
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: 'Net Collection', value: '94%', trend: 'up' as const, target: '92%' },
-          { label: 'Cost by Chair Hour', value: '$42/hr', trend: 'up' as const, target: '$50/hr'},
+          { label: 'Cost by Chair Hour', value: '$42/hr', trend: 'stable' as const, target: '$50/hr'},
           { label: 'Denial Rate', value: '5.4%', trend: 'stable' as const, target: '5%' },
           { label: 'Case Acceptance', value: '72%', trend: 'up' as const, target: '70%' }
-        ].map((kpi, i) => (
+        ].map((kpi: { label: string; value: string; trend: 'up' | 'down' | 'stable'; target: string }, i) => (
           <Link
             key={i}
             to={`/kpis/${kpi.label.replace(/\s+/g, '-').toLowerCase()}`}
