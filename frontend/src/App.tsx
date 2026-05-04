@@ -467,7 +467,7 @@ const OverviewTab = () => {
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: 'Net Collection', value: '94%', trend: 'up' as const, target: '92%' },
-          { label: 'Hygiene Re-book', value: '78%', trend: 'down' as const, target: '85%' },
+          { label: 'Cost by Chair Hour', value: '$42/hr', trend: 'up' as const, target: '$50/hr'},
           { label: 'Denial Rate', value: '5.4%', trend: 'stable' as const, target: '5%' },
           { label: 'Case Acceptance', value: '72%', trend: 'up' as const, target: '70%' }
         ].map((kpi, i) => (
