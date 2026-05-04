@@ -36,8 +36,9 @@ exports.getValuation = async (req, res) => {
         });
         
         // Sum up revenue from appointments and procedures
-        const appointmentRevenue = appointments.reduce((sum, appt) => sum + (appt.productionValue || 0), 0);
-        const procedureRevenue = procedures.reduce((sum, proc) => sum + (proc.productionValue || 0), 0);
+        // NOTE: Prisma returns Decimal fields as strings — must parseFloat before summing
+        const appointmentRevenue = appointments.reduce((sum, appt) => sum + parseFloat(appt.productionValue || 0), 0);
+        const procedureRevenue = procedures.reduce((sum, proc) => sum + parseFloat(proc.productionValue || 0), 0);
         const practiceRevenue = appointmentRevenue + procedureRevenue;
         
         // Get expenses for this practice
@@ -46,7 +47,7 @@ exports.getValuation = async (req, res) => {
           select: { amount: true }
         });
         
-        const practiceExpenses = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+        const practiceExpenses = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount || 0), 0);
         
         // Calculate EBITDA for this practice (revenue - expenses)
         const practiceEBITDA = practiceRevenue - practiceExpenses;
