@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDown, Target } from 'lucide-react';
 import { useDentsightStore } from '../store/useDentsightStore';
 import { fetchCompanies } from '../services/api';
@@ -9,11 +9,11 @@ export const CompanySelector = () => {
   const [isLoading, setIsLoading] = useState(companies.length === 0);
 
   // Fetch companies on mount if not already loaded
-  useState(() => {
+  useEffect(() => {
     if (companies.length === 0) {
       loadCompanies();
     }
-  });
+  }, []);
 
   const loadCompanies = async () => {
     try {
