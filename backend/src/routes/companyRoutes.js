@@ -3,9 +3,9 @@ const router = express.Router();
 const { getAllCompanies, getCompanyById } = require('../controllers/companyController');
 
 // Get all companies
-router.get('/api/companies', getAllCompanies);
+router.get('/', getAllCompanies);
 
 // Get company by ID
-router.get('/api/companies/:id', getCompanyById);
+router.get('/:id', getCompanyById);
 
 module.exports = router;
