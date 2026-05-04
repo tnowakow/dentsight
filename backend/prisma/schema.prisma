@@ -5,6 +5,16 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  
+}
+
+model Company {
+  id                   String    @id @default(cuid())
+  name                 String
+  isAcquisitionTarget  Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+
+  practices            Practice[]
 }
 
 model Practice {
@@ -17,6 +27,7 @@ model Practice {
   subscriptionTier String?   @map("subscription_tier") @default("founding") @db.VarChar(50)
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz 
   updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  companyId        String    @map("company_id")
 
   patients     Patient[]
   appointments Appointment[]
@@ -24,6 +35,8 @@ model Practice {
   metrics      Metric[]
   alerts       Alert[]
   expenses     Expense[]
+
+  company        Company   @relation(fields: [companyId], references: [id])
 
   @@map("practices")
 }
