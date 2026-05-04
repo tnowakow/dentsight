@@ -564,11 +564,14 @@ function App() {
           <Routes>
             {/* Overview Route with Right Rail */}
             <Route path="/" element={
-              <div className="flex gap-8">
+              <div className="flex flex-col md:flex-row gap-6 md:gap-8">
                 <div className="flex-1 min-w-0">
                   <OverviewTab />
                 </div>
-                <RightRail />
+                {/* Hide right rail on mobile, show on desktop */}
+                <aside className="hidden md:block w-80 flex-shrink-0">
+                  <RightRail />
+                </aside>
               </div>
             } />
             
