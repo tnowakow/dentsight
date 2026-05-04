@@ -30,6 +30,7 @@ app.use('/api/metrics', metricsRoutes);
 app.use('/api/alerts', alertsRoutes);
 app.use('/api/valuation', valuationRoutes);
 app.use('/api/practice', practiceRoutes);
+app.use('/api/practices', practiceRoutes);
 app.use('/api/companies', companyRoutes);
 
 // Health check endpoint

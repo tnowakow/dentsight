@@ -3,9 +3,12 @@ const router = express.Router();
 const alertsController = require('../controllers/alertsController');
 const authMiddleware = require('../middleware/authMiddleware');
 
-router.use(authMiddleware);
+const publicOrAuth = (req, res, next) => {
+  if (req.query.company_id) return next();
+  return authMiddleware(req, res, next);
+};
 
-router.get('/', alertsController.getAlerts);
-router.post('/:id/resolve', alertsController.resolveAlert);
+router.get('/', publicOrAuth, alertsController.getAlerts);
+router.post('/:id/resolve', authMiddleware, alertsController.resolveAlert);
 
 module.exports = router;
