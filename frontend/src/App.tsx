@@ -341,18 +341,28 @@ const RightRail = () => {
       {/* Recommended Actions */}
       <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 space-y-3">
         <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Recommended Actions</h3>
-        <div className="space-y-2">
-          {priorities.map((priority, i) => (
-            <Link
-              key={i}
-              to={`/priorities/${priority.id}`}
-              className="block p-3 rounded-lg bg-slate-950/50 hover:bg-slate-800 transition-colors border border-slate-800/50 hover:border-blue-500/30"
-            >
-              <p className="text-sm text-white font-medium">{priority.headline}</p>
-              <p className="text-xs text-slate-500 mt-1 line-clamp-2">{priority.subtext}</p>
-            </Link>
-          ))}
-        </div>
+        {priorities.length > 0 ? (
+          <div className="space-y-2">
+            {priorities.map((priority, i) => (
+              <Link
+                key={i}
+                to={`/priorities/${priority.id}`}
+                className="block p-3 rounded-lg bg-slate-950/50 hover:bg-slate-800 transition-colors border border-slate-800/50 hover:border-blue-500/30"
+              >
+                <p className="text-sm text-white font-medium">{priority.headline}</p>
+                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{priority.subtext}</p>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 p-4 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+            <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-white">Nothing needs attention this week</p>
+              <p className="text-xs text-slate-400 mt-1">All metrics are above thresholds — great job!</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Last Refreshed */}
