@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { useDentsightStore, type DateFilter } from './store/useDentsightStore';
 import { fetchAlerts, fetchValuation } from './services/api';
+
+// Fetch KPI data from backend
+const fetchKpiData = async (companyId: string) => {
+  const response = await fetch(`/api/kpi/company-overview?company_id=${companyId}`);
+  if (!response.ok) throw new Error('Failed to fetch KPIs');
+  return response.json();
+};
 import { formatCurrency } from './utils/formatting';
 import { CompanySelector } from './components/CompanySelector';
 import { 
@@ -389,7 +396,13 @@ const OverviewTab = () => {
             `${formatCurrency(valuationData.valuation_range.low)} - ${formatCurrency(valuationData.valuation_range.high)}`
           );
         }
-        if (valuationData) {
+
+        // Fetch KPI data from backend
+        const kpiData = await fetchKpiData(selectedCompanyId);
+        if (kpiData?.quickStats) {
+          setQuickStats(kpiData.quickStats);
+        } else if (valuationData) {
+          // Fallback to valuation data if KPIs not available
           setQuickStats({
             monthlyProduction: valuationData.revenue ? Math.round(valuationData.revenue / 12) : null,
             unscheduledTreatmentValue: null,
