@@ -225,7 +225,6 @@ const PriorityCard: React.FC<PriorityCardProps> = ({ icon, headline, subtext, ct
 // ============================================================================
 
 const CompactHealthScore = () => {
-  const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
   const [expanded, setExpanded] = useState(false);
   const healthScore = 84; // TODO: calculate from metrics API
 
