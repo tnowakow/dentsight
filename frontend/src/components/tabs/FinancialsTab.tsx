@@ -30,7 +30,7 @@ export const FinancialsTab = () => {
   const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
   const [isLoading, setIsLoading] = useState(true);
   const [denialRates, setDenialRates] = useState(defaultDenialRates);
-  const [productionBreakdown, setProductionBreakdown] = useState(defaultProductionBreakdown);
+  const [productionBreakdown] = useState(defaultProductionBreakdown); // TODO: wire to API when endpoint returns breakdown data
   const [costAnalysis, setCostAnalysis] = useState(defaultCostAnalysis);
 
   useEffect(() => {

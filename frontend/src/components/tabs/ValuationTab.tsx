@@ -91,7 +91,7 @@ export const ValuationTab = () => {
             calculation="Common add-backs:\n• Owner salary adjustments (to market rate)\n• Personal expenses run through business\n• One-time legal/marketing costs\n• Non-recurring repairs\n\nTotal add-backs increase valuation." />
         </div>
         <div className="divide-y divide-slate-800">
-          {addbacks.map((item, i) => (
+          {addbacks.map((item: { name: string; amount: number; category: string }, i: number) => (
             <div key={i} className="p-6 flex justify-between items-center hover:bg-slate-800/30 transition-colors">
               <div>
                 <h4 className="text-white font-medium">{item.name}</h4>
@@ -103,7 +103,7 @@ export const ValuationTab = () => {
           {/* 4b. Total Add-Backs Summary */}
           <div className="p-6 flex justify-between items-center bg-slate-800/30 font-bold">
             <span className="text-white">Total Add-Backs</span>
-            <span className="text-emerald-400 text-lg">+${formatNumber(addbacks.reduce((sum, item) => sum + item.amount, 0))}</span>
+            <span className="text-emerald-400 text-lg">+${formatNumber(addbacks.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0))}</span>
           </div>
         </div>
 
