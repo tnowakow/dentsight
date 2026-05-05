@@ -233,16 +233,27 @@ const PriorityCard: React.FC<PriorityCardProps> = ({ icon, headline, subtext, ct
 
 const CompactHealthScore = () => {
   const [expanded, setExpanded] = useState(false);
-  const healthScore = 84; // TODO: calculate from metrics API
+  const [healthScore, setHealthScore] = useState<number | null>(null);
+  const [healthMetrics, setHealthMetrics] = useState<{ name: string; score: number; weight: number; target: number }[]>([]);
+  const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
 
-  const healthMetrics = [
-    { name: 'Net Collection Rate', score: 94, weight: 20, target: 92 },
-    { name: 'Hygiene Re-appointment', score: 78, weight: 25, target: 85 },
-    { name: 'Denial Rate', score: 95, weight: 15, target: 95 }, // Inverted - lower is better
-    { name: 'Case Acceptance', score: 72, weight: 20, target: 70 },
-    { name: 'No-Show Rate', score: 85, weight: 10, target: 92 }, // Inverted
-    { name: 'Provider Utilization', score: 88, weight: 10, target: 85 },
-  ];
+  useEffect(() => {
+    if (!selectedCompanyId) return;
+    fetchKpiData(selectedCompanyId)
+      .then((data: any) => {
+        if (data?.healthScore != null) setHealthScore(data.healthScore);
+        const metrics = [
+          { name: 'Net Collection Rate', score: data?.netCollectionRate ?? 0, weight: 25, target: 92 },
+          { name: 'Case Acceptance', score: data?.caseAcceptance ?? 0, weight: 20, target: 70 },
+          { name: 'Denial Rate', score: data?.denialRate != null ? Math.max(0, 100 - data.denialRate * 10) : 0, weight: 15, target: 95 },
+          { name: 'No-Show Rate', score: data?.noShowRate != null ? Math.max(0, 100 - data.noShowRate * 5) : 0, weight: 15, target: 92 },
+          { name: 'Cost per Chair Hour', score: data?.costPerChairHour != null ? Math.max(0, 100 - (data.costPerChairHour - 40)) : 0, weight: 10, target: 85 },
+          { name: 'Days Sales Outstanding', score: data?.dso != null ? Math.max(0, 100 - data.dso) : 0, weight: 15, target: 85 },
+        ];
+        setHealthMetrics(metrics);
+      })
+      .catch(() => {});
+  }, [selectedCompanyId]);
   
   const getVerdict = (score: number) => {
     if (score >= 90) return { text: 'Excellent', color: 'text-emerald-500' };
@@ -251,7 +262,7 @@ const CompactHealthScore = () => {
     return { text: 'Critical', color: 'text-red-500' };
   };
 
-  const verdict = getVerdict(healthScore);
+  const verdict = getVerdict(healthScore ?? 0);
 
   return (
     <div className="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
