@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { useDentsightStore, type DateFilter } from './store/useDentsightStore';
-import { fetchAlerts, fetchValuation } from './services/api';
+import { fetchAlerts, fetchValuation, fetchRecommendations } from './services/api';
 
 // Fetch KPI data from backend
 const fetchKpiData = async (companyId: string) => {
@@ -321,8 +321,8 @@ const RightRail = () => {
 
   useEffect(() => {
     if (!selectedCompanyId) return;
-    fetchAlerts(selectedCompanyId, false)
-      .then(data => setPriorities((data || []).filter((a: any) => a.severity <= 2).slice(0, 4)))
+    fetchRecommendations(selectedCompanyId)
+      .then(data => setPriorities((data || []).slice(0, 4)))
       .catch(() => {});
   }, [selectedCompanyId]);
   
@@ -360,8 +360,8 @@ const RightRail = () => {
                 to={`/priorities/${priority.id}`}
                 className="block p-3 rounded-lg bg-slate-950/50 hover:bg-slate-800 transition-colors border border-slate-800/50 hover:border-blue-500/30"
               >
-                <p className="text-sm text-white font-medium">{priority.headline}</p>
-                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{priority.subtext}</p>
+                <p className="text-sm text-white font-medium">{priority.title}</p>
+                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{priority.description}</p>
               </Link>
             ))}
           </div>

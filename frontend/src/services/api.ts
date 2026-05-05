@@ -220,6 +220,22 @@ export async function fetchKpiData(companyId?: string): Promise<any> {
   return response.json();
 }
 
+export async function fetchRecommendations(companyId?: string): Promise<any[]> {
+  if (useMockData) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return [
+      { priority: 'high', category: 'Revenue', title: 'Improve Case Acceptance', description: 'Case acceptance is below target.', actions: ['Train staff', 'Use visual aids'], potentialImpact: '+$5,000/month' }
+    ];
+  }
+  
+  const url = companyId 
+    ? `${API_BASE_URL}/recommendations?company_id=${companyId}`
+    : `${API_BASE_URL}/recommendations`;
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Failed to fetch recommendations: ${response.statusText}`);
+  return response.json();
+}
+
 // Fetch operations data (denial rates, appointment metrics)
 export async function fetchOperationsData(companyId?: string): Promise<any> {
   if (useMockData) {
