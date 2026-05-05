@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 exports.getOperationsData = async (req, res) => {
   try {
-    const { company_id, practice_id } = req.query;
+    const { company_id, practice_id, date_filter } = req.query;
     
     if (!company_id && !practice_id) {
       return res.status(400).json({ error: 'company_id or practice_id is required' });
@@ -66,7 +66,7 @@ exports.getOperationsData = async (req, res) => {
     }
 
     // Get KPI data for appointment metrics
-    const kpis = await calculatePracticeKPIs(null, company_id);
+    const kpis = await calculatePracticeKPIs(null, company_id, date_filter);
     const practices = Object.values(kpis);
     
     let avgKpis = {};

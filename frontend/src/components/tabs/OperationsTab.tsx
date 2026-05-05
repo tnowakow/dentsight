@@ -27,6 +27,7 @@ const defaultHygieneTrend = [
 
 export const OperationsTab = () => {
   const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
+  const dateFilter        = useDentsightStore((state) => state.dateFilter);
   const [isLoading, setIsLoading] = useState(true);
   const [providerProduction, setProviderProduction] = useState(defaultProviderProduction);
   const [appointmentMetrics, setAppointmentMetrics] = useState(defaultAppointmentMetrics);
@@ -39,10 +40,8 @@ export const OperationsTab = () => {
     
     const fetchData = async () => {
       try {
-        // Fetch operations data
-        const opsData = await fetchOperationsData(selectedCompanyId);
+        const opsData = await fetchOperationsData(selectedCompanyId, dateFilter);
         
-        // Update state with fetched data if available (null means API returned no data)
         if (opsData?.providerProduction != null && opsData.providerProduction.length > 0) {
           setProviderProduction(opsData.providerProduction);
         }
@@ -50,7 +49,6 @@ export const OperationsTab = () => {
           setAppointmentMetrics(opsData.appointmentMetrics);
         }
 
-        // Fetch hygiene trend specifically
         const trendData = await fetchMetricTrend('hygiene-recare', selectedCompanyId, 12);
         if (trendData && trendData.length > 0) {
           setHygieneTrend(trendData.map((d: any) => ({
@@ -66,7 +64,7 @@ export const OperationsTab = () => {
     };
 
     fetchData();
-  }, [selectedCompanyId]);
+  }, [selectedCompanyId, dateFilter]);
 
   if (isLoading) {
     return (

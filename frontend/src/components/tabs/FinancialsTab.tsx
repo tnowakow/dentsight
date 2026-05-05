@@ -30,6 +30,7 @@ const defaultCostAnalysis = {
 
 export const FinancialsTab = () => {
   const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
+  const dateFilter        = useDentsightStore((state) => state.dateFilter);
   const [isLoading, setIsLoading] = useState(true);
   const [denialRates, setDenialRates] = useState(defaultDenialRates);
   const [productionBreakdown] = useState(defaultProductionBreakdown); // TODO: wire to API when endpoint returns breakdown data
@@ -42,8 +43,7 @@ export const FinancialsTab = () => {
     
     const fetchData = async () => {
       try {
-        // Fetch operations data which includes denial rates and other metrics
-        const opsData = await fetchOperationsData(selectedCompanyId);
+        const opsData = await fetchOperationsData(selectedCompanyId, dateFilter);
         
         // Update state with fetched data if available
         if (opsData?.denialRates != null && opsData.denialRates.length > 0) {
@@ -64,7 +64,7 @@ export const FinancialsTab = () => {
     };
 
     fetchData();
-  }, [selectedCompanyId]);
+  }, [selectedCompanyId, dateFilter]);
 
   if (isLoading) {
     return (

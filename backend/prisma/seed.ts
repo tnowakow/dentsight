@@ -113,24 +113,64 @@ async function main() {
         await prisma.procedure.createMany({ data: procRows.slice(c, c + 500) })
       }
 
-      // --- Metrics (batch) ---
-      const metricRows = [
-        { name: 'hygiene_recare_rate',   value: scenario.recare * 100,      unit: '%' },
-        { name: 'net_collection_rate',   value: scenario.collection * 100,  unit: '%' },
-        { name: 'denial_rate',           value: scenario.denial * 100,      unit: '%' },
-        { name: 'cost_per_chair_hour',   value: scenario.costPerHour,       unit: '$' },
-        { name: 'case_acceptance_rate',  value: 68 + Math.random() * 12,    unit: '%' },
-        { name: 'new_patient_count',     value: Math.floor(perPracticePatients * scenario.growth * 10), unit: 'count' },
-      ].map(m => ({
-        practiceId:        practice.id,
-        metricDate:        new Date(),
-        metricName:        m.name,
-        metricValue:       m.value * (0.98 + Math.random() * 0.04),
-        targetValue:       m.value,
-        industryBenchmark: m.value * 0.95,
-        unit:              m.unit,
-      }))
-      await prisma.metric.createMany({ data: metricRows })
+      // --- Metrics: 12 monthly snapshots so date filters stay fresh forever ---
+      // Values roll backward in time using the clinic's growth rate,
+      // so historical months genuinely look like they did then.
+      const monthlyProductionCurrent = perPracticeRevenue / 12;
+      const caseAcceptanceCurrent    = 68 + Math.random() * 12;
+      const noShowRateCurrent        = scenario.growth > 0.1 ? 6 + Math.random() * 2   // fast-growing: low no-shows
+                                     : scenario.growth < 0   ? 11 + Math.random() * 4  // declining: high no-shows
+                                     :                         7.5 + Math.random() * 3;
+      const dsoCurrent               = scenario.growth > 0.1 ? 22 + Math.random() * 8
+                                     : scenario.growth < 0   ? 38 + Math.random() * 12
+                                     :                         28 + Math.random() * 10;
+      const unscheduledCurrent       = monthlyProductionCurrent * (0.25 + Math.random() * 0.15);
+
+      const allMonthRows: any[] = [];
+      for (let monthsAgo = 0; monthsAgo < 12; monthsAgo++) {
+        // metricDate = 1st of the month, N months ago
+        const metricDate = new Date();
+        metricDate.setDate(1);
+        metricDate.setMonth(metricDate.getMonth() - monthsAgo);
+        metricDate.setHours(0, 0, 0, 0);
+
+        // Monthly growth factor: values were proportionally lower further back
+        const monthlyGrowthRate = scenario.growth / 12;
+        const historicFactor    = Math.pow(1 + monthlyGrowthRate, monthsAgo); // >1 means current is higher
+        const noise             = () => 0.97 + Math.random() * 0.06;          // ±3% random noise
+
+        // Revenue-linked metrics shrink/grow with the practice
+        const monthlyProd   = (monthlyProductionCurrent / historicFactor) * noise();
+        const unscheduled   = (unscheduledCurrent       / historicFactor) * noise();
+
+        // Rate metrics: trend toward worse values historically for growing clinics
+        const trendNoise    = () => 0.98 + Math.random() * 0.04;
+        const collectionAdj = scenario.collection * 100 * (scenario.growth > 0 ? Math.pow(0.999, monthsAgo) : 1) * trendNoise();
+        const denialAdj     = scenario.denial     * 100 * (scenario.growth > 0 ? Math.pow(1.003, monthsAgo) : 1) * trendNoise();
+        const recareAdj     = scenario.recare     * 100 * (scenario.growth > 0 ? Math.pow(0.998, monthsAgo) : 1) * trendNoise();
+        const caseAdj       = caseAcceptanceCurrent    * (scenario.growth > 0 ? Math.pow(0.999, monthsAgo) : 1) * trendNoise();
+        const noShowAdj     = noShowRateCurrent        * (scenario.growth > 0 ? Math.pow(1.002, monthsAgo) : 1) * trendNoise();
+        const dsoAdj        = dsoCurrent               * (scenario.growth > 0 ? Math.pow(1.001, monthsAgo) : 1) * trendNoise();
+        const costAdj       = scenario.costPerHour     * (scenario.growth > 0 ? Math.pow(1.001, monthsAgo) : 1) * trendNoise();
+        const newPatientsAdj = Math.max(0, Math.floor(perPracticePatients * scenario.growth * 10 / historicFactor));
+
+        allMonthRows.push(
+          { practiceId: practice.id, metricDate, metricName: 'monthly_production',        metricValue: monthlyProd,    targetValue: monthlyProductionCurrent, industryBenchmark: monthlyProductionCurrent * 0.9, unit: '$' },
+          { practiceId: practice.id, metricDate, metricName: 'net_collection_rate',        metricValue: collectionAdj,  targetValue: scenario.collection * 100, industryBenchmark: 95, unit: '%' },
+          { practiceId: practice.id, metricDate, metricName: 'denial_rate',                metricValue: denialAdj,      targetValue: scenario.denial * 100,     industryBenchmark: 5,  unit: '%' },
+          { practiceId: practice.id, metricDate, metricName: 'hygiene_recare_rate',        metricValue: recareAdj,      targetValue: scenario.recare * 100,     industryBenchmark: 80, unit: '%' },
+          { practiceId: practice.id, metricDate, metricName: 'case_acceptance_rate',       metricValue: caseAdj,        targetValue: 70,                        industryBenchmark: 65, unit: '%' },
+          { practiceId: practice.id, metricDate, metricName: 'no_show_rate',               metricValue: noShowAdj,      targetValue: 8,                         industryBenchmark: 10, unit: '%' },
+          { practiceId: practice.id, metricDate, metricName: 'cost_per_chair_hour',        metricValue: costAdj,        targetValue: scenario.costPerHour,      industryBenchmark: 250, unit: '$' },
+          { practiceId: practice.id, metricDate, metricName: 'dso',                        metricValue: dsoAdj,         targetValue: 30,                        industryBenchmark: 35, unit: 'days' },
+          { practiceId: practice.id, metricDate, metricName: 'unscheduled_treatment_value',metricValue: unscheduled,    targetValue: unscheduledCurrent,        industryBenchmark: unscheduledCurrent * 0.8, unit: '$' },
+          { practiceId: practice.id, metricDate, metricName: 'new_patient_count',          metricValue: newPatientsAdj, targetValue: newPatientsAdj,            industryBenchmark: newPatientsAdj, unit: 'count' },
+        );
+      }
+      // Insert in chunks to avoid payload limits
+      for (let c = 0; c < allMonthRows.length; c += 500) {
+        await prisma.metric.createMany({ data: allMonthRows.slice(c, c + 500) });
+      }
 
       // --- Alerts (batch) ---
       if (scenario.alerts.length > 0) {

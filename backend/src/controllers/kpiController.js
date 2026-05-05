@@ -2,13 +2,13 @@ const { calculatePracticeKPIs } = require('../services/kpiService');
 
 exports.getOverviewData = async (req, res) => {
   try {
-    const { practice_id, company_id } = req.query;
+    const { practice_id, company_id, date_filter } = req.query;
     
     if (!practice_id && !company_id) {
       return res.status(400).json({ error: 'Either practice_id or company_id is required' });
     }
 
-    const kpis = await calculatePracticeKPIs(practice_id || null, company_id);
+    const kpis = await calculatePracticeKPIs(practice_id || null, company_id, date_filter);
     
     // Return data for the first practice if multiple exist
     const practiceId = Array.isArray(kpis) ? Object.keys(kpis)[0] : practice_id;
@@ -34,13 +34,13 @@ exports.getOverviewData = async (req, res) => {
 
 exports.getCompanyOverview = async (req, res) => {
   try {
-    const { company_id } = req.query;
+    const { company_id, date_filter } = req.query;
     
     if (!company_id) {
       return res.status(400).json({ error: 'company_id is required' });
     }
 
-    const kpis = await calculatePracticeKPIs(null, company_id);
+    const kpis = await calculatePracticeKPIs(null, company_id, date_filter);
     const practices = Object.values(kpis);
     
     if (practices.length === 0) {

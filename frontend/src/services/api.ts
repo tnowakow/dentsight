@@ -209,12 +209,16 @@ export async function fetchMetricTrend(metricName: string, companyId?: string, m
   return response.json();
 }
 
-export async function fetchKpiData(companyId?: string): Promise<any> {
+export async function fetchKpiData(companyId?: string, dateFilter?: string): Promise<any> {
   if (useMockData) {
     await new Promise(resolve => setTimeout(resolve, 300));
     return { healthScore: 84, netCollectionRate: 94, costPerChairHour: 42, denialRate: 5.4, caseAcceptance: 72, monthlyProduction: 125000, unscheduledTreatmentValue: 45000, noShowRate: 8.5, dso: 42 };
   }
-  const url = companyId ? `${API_BASE_URL}/kpi/company-overview?company_id=${companyId}` : `${API_BASE_URL}/kpi/overview`;
+  const params = new URLSearchParams();
+  if (companyId)   params.append('company_id',   companyId);
+  if (dateFilter)  params.append('date_filter',  dateFilter);
+  const base = companyId ? `${API_BASE_URL}/kpi/company-overview` : `${API_BASE_URL}/kpi/overview`;
+  const url  = params.toString() ? `${base}?${params}` : base;
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Failed to fetch KPI data: ${response.statusText}`);
   return response.json();
@@ -262,7 +266,7 @@ export async function fetchRecommendations(companyId?: string): Promise<any[]> {
 }
 
 // Fetch operations data (denial rates, appointment metrics, provider production)
-export async function fetchOperationsData(companyId?: string): Promise<any> {
+export async function fetchOperationsData(companyId?: string, dateFilter?: string): Promise<any> {
   if (useMockData) {
     await new Promise(resolve => setTimeout(resolve, 300));
     return {
@@ -272,10 +276,11 @@ export async function fetchOperationsData(companyId?: string): Promise<any> {
     };
   }
 
-  const url = companyId 
-    ? `${API_BASE_URL}/operations?company_id=${companyId}`
-    : `${API_BASE_URL}/operations`;
-  
+  const params = new URLSearchParams();
+  if (companyId)  params.append('company_id',  companyId);
+  if (dateFilter) params.append('date_filter', dateFilter);
+  const url = `${API_BASE_URL}/operations${params.toString() ? '?' + params : ''}`;
+
   try {
     const response = await fetch(url);
     if (!response.ok) {

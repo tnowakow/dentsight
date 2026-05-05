@@ -1,14 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useParams } from 'react-router-dom';
 import { useDentsightStore, type DateFilter } from './store/useDentsightStore';
-import { fetchAlerts, fetchValuation, fetchRecommendations } from './services/api';
-
-// Fetch KPI data from backend
-const fetchKpiData = async (companyId: string) => {
-  const response = await fetch(`/api/kpi/company-overview?company_id=${companyId}`);
-  if (!response.ok) throw new Error('Failed to fetch KPIs');
-  return response.json();
-};
+import { fetchAlerts, fetchValuation, fetchRecommendations, fetchKpiData } from './services/api';
 import { formatCurrency, formatKpiPercent, formatChairHour } from './utils/formatting';
 import { CompanySelector } from './components/CompanySelector';
 import { InfoTooltip } from './components/ui/InfoTooltip';
@@ -245,6 +238,7 @@ const CompactHealthScore = () => {
   const [healthScore, setHealthScore] = useState<number | null>(null);
   const [healthMetrics, setHealthMetrics] = useState<{ name: string; score: number; weight: number }[]>([]);
   const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
+  const dateFilter        = useDentsightStore((state) => state.dateFilter);
 
   // Per-metric tooltip content shown in the expanded Health Performance Score panel
   const metricInfo: Record<string, { title: string; description: string; calculation: string }> = {
@@ -282,7 +276,7 @@ const CompactHealthScore = () => {
 
   useEffect(() => {
     if (!selectedCompanyId) return;
-    fetchKpiData(selectedCompanyId)
+    fetchKpiData(selectedCompanyId, dateFilter)
       .then((data: any) => {
         if (data?.healthScore != null) setHealthScore(data.healthScore);
         const metrics = [
@@ -297,7 +291,7 @@ const CompactHealthScore = () => {
         setHealthMetrics(metrics);
       })
       .catch(() => {});
-  }, [selectedCompanyId]);
+  }, [selectedCompanyId, dateFilter]);
   
   const getVerdict = (score: number) => {
     if (score >= 90) return { text: 'Excellent', color: 'text-emerald-500' };
@@ -537,6 +531,7 @@ const RecommendedActionsHero = () => {
 
 const OverviewTab = () => {
   const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
+  const dateFilter        = useDentsightStore((state) => state.dateFilter);
   const [isLoading, setIsLoading] = useState(true);
   const [valuationPreview, setValuationPreview] = useState('$3.15M - $3.40M');
   const [kpiData, setKpiData] = useState<any>({});
@@ -557,7 +552,7 @@ const OverviewTab = () => {
         }
 
         // Fetch KPI data from backend (fields are at root level, not nested)
-        const kpi = await fetchKpiData(selectedCompanyId);
+        const kpi = await fetchKpiData(selectedCompanyId, dateFilter);
         setKpiData(kpi || {});
       } catch (error) {
         console.error('Error fetching overview data:', error);
@@ -567,7 +562,7 @@ const OverviewTab = () => {
     };
 
     fetchData();
-  }, [selectedCompanyId]);
+  }, [selectedCompanyId, dateFilter]);
 
 
   if (isLoading) {
