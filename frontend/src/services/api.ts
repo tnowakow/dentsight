@@ -233,7 +233,32 @@ export async function fetchRecommendations(companyId?: string): Promise<any[]> {
     : `${API_BASE_URL}/recommendations`;
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Failed to fetch recommendations: ${response.statusText}`);
-  return response.json();
+  const data = await response.json();
+
+  // Company response: { companyId, practices: [{ recommendations: [...] }] }
+  // Extract, deduplicate by title, and sort high → medium → low
+  if (data.practices) {
+    const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
+    const seen = new Set<string>();
+    const allRecs: any[] = [];
+    for (const practice of data.practices) {
+      for (const rec of (practice.recommendations || [])) {
+        if (!seen.has(rec.title)) {
+          seen.add(rec.title);
+          allRecs.push(rec);
+        }
+      }
+    }
+    return allRecs.sort((a, b) => (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3));
+  }
+
+  // Practice response: { practiceId, recommendations: [...] }
+  if (data.recommendations) {
+    return data.recommendations;
+  }
+
+  // Fallback: if the API ever returns a plain array
+  return Array.isArray(data) ? data : [];
 }
 
 // Fetch operations data (denial rates, appointment metrics, provider production)

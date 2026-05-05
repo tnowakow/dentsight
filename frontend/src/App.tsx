@@ -11,6 +11,7 @@ const fetchKpiData = async (companyId: string) => {
 };
 import { formatCurrency, formatKpiPercent, formatChairHour } from './utils/formatting';
 import { CompanySelector } from './components/CompanySelector';
+import { InfoTooltip } from './components/ui/InfoTooltip';
 import { 
   Home, Activity, DollarSign, Calculator, ChevronDown, Calendar, HelpCircle, 
   AlertTriangle, CheckCircle2, Info, ArrowRight, TrendingUp, Clock, DollarSign as DollarIcon,
@@ -234,8 +235,42 @@ const PriorityCard: React.FC<PriorityCardProps> = ({ icon, headline, subtext, ct
 const CompactHealthScore = () => {
   const [expanded, setExpanded] = useState(false);
   const [healthScore, setHealthScore] = useState<number | null>(null);
-  const [healthMetrics, setHealthMetrics] = useState<{ name: string; score: number; weight: number; target: number }[]>([]);
+  const [healthMetrics, setHealthMetrics] = useState<{ name: string; score: number; weight: number }[]>([]);
   const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
+
+  // Per-metric tooltip content shown in the expanded Health Performance Score panel
+  const metricInfo: Record<string, { title: string; description: string; calculation: string }> = {
+    'Net Collection Rate': {
+      title: 'Net Collection Rate Score',
+      description: 'How much of your billed production is actually collected after insurance adjustments and write-offs. A high score means you are capturing nearly all the revenue you earn.',
+      calculation: 'Score = (actual ÷ 95% target) × 100, capped at 100\nWeight: 25% of overall Health Score\nTarget: ≥95% | Industry benchmark: 92–98%'
+    },
+    'Case Acceptance': {
+      title: 'Case Acceptance Score',
+      description: 'Percentage of presented treatment plans that patients accept and schedule. Low acceptance means revenue is being left on the table — patients need treatment but aren\'t saying yes.',
+      calculation: 'Score = (actual ÷ 70% target) × 100, capped at 100\nWeight: 20% of overall Health Score\nTarget: ≥70% | Top practices hit 80%+'
+    },
+    'Denial Rate': {
+      title: 'Denial Rate Score',
+      description: 'Percentage of submitted insurance claims rejected by payers. Lower is better — high denials delay cash flow and increase admin burden.',
+      calculation: 'Score = (2 − actual ÷ 5% target) × 50 (lower rate = higher score)\nWeight: 15% of overall Health Score\nTarget: ≤5% | Above 8% needs immediate attention'
+    },
+    'No-Show Rate': {
+      title: 'No-Show Rate Score',
+      description: 'Percentage of scheduled appointments where the patient does not arrive. Every no-show is a chair sitting empty — typically $200–400 in lost production each time.',
+      calculation: 'Score = (2 − actual ÷ 8% target) × 50 (lower rate = higher score)\nWeight: 15% of overall Health Score\nTarget: ≤8% | Each 1% above target = ~$2K/month lost'
+    },
+    'Cost per Chair Hour': {
+      title: 'Cost per Chair Hour Score',
+      description: 'Total practice overhead divided by total chair operating hours. Measures how efficiently the practice manages its costs relative to capacity.',
+      calculation: 'Score = (2 − actual ÷ $250 target) × 50 (lower cost = higher score)\nWeight: 10% of overall Health Score\nTarget: ≤$250/hr | Lean practices: $150–200/hr | Above $300/hr = overhead problem'
+    },
+    'Days Sales Outstanding': {
+      title: 'Days Sales Outstanding (DSO) Score',
+      description: 'Average number of days between providing a service and receiving payment. High DSO means cash is tied up in receivables and collections are slow.',
+      calculation: 'Score = (2 − actual ÷ 30-day target) × 50 (lower days = higher score)\nWeight: 15% of overall Health Score\nTarget: ≤30 days | Above 45 days = AR/collections problem'
+    },
+  };
 
   useEffect(() => {
     if (!selectedCompanyId) return;
@@ -244,13 +279,12 @@ const CompactHealthScore = () => {
         if (data?.healthScore != null) setHealthScore(data.healthScore);
         const metrics = [
           // Scores mirror kpiService.js formula so the panel matches the backend health score
-          { name: 'Net Collection Rate', score: data?.netCollectionRate != null ? Math.min(100, (data.netCollectionRate / 95) * 100) : 0, weight: 25, target: 95 },
-          { name: 'Case Acceptance', score: data?.caseAcceptance != null ? Math.min(100, (data.caseAcceptance / 70) * 100) : 0, weight: 20, target: 70 },
-          { name: 'Denial Rate', score: data?.denialRate != null ? Math.max(0, Math.min(100, (2 - data.denialRate / 5) * 50)) : 0, weight: 15, target: 5 },
-          { name: 'No-Show Rate', score: data?.noShowRate != null ? Math.max(0, Math.min(100, (2 - data.noShowRate / 8) * 50)) : 0, weight: 15, target: 8 },
-          // Industry standard: $150-250/hr overhead per chair. Target $250 = good practice.
-          { name: 'Cost per Chair Hour', score: data?.costPerChairHour != null ? Math.max(0, Math.min(100, (2 - data.costPerChairHour / 250) * 50)) : 0, weight: 10, target: 250 },
-          { name: 'Days Sales Outstanding', score: data?.dso != null ? Math.max(0, Math.min(100, (2 - data.dso / 30) * 50)) : 0, weight: 15, target: 30 },
+          { name: 'Net Collection Rate', score: data?.netCollectionRate != null ? Math.min(100, (data.netCollectionRate / 95) * 100) : 0, weight: 25 },
+          { name: 'Case Acceptance', score: data?.caseAcceptance != null ? Math.min(100, (data.caseAcceptance / 70) * 100) : 0, weight: 20 },
+          { name: 'Denial Rate', score: data?.denialRate != null ? Math.max(0, Math.min(100, (2 - data.denialRate / 5) * 50)) : 0, weight: 15 },
+          { name: 'No-Show Rate', score: data?.noShowRate != null ? Math.max(0, Math.min(100, (2 - data.noShowRate / 8) * 50)) : 0, weight: 15 },
+          { name: 'Cost per Chair Hour', score: data?.costPerChairHour != null ? Math.max(0, Math.min(100, (2 - data.costPerChairHour / 250) * 50)) : 0, weight: 10 },
+          { name: 'Days Sales Outstanding', score: data?.dso != null ? Math.max(0, Math.min(100, (2 - data.dso / 30) * 50)) : 0, weight: 15 },
         ];
         setHealthMetrics(metrics);
       })
@@ -287,23 +321,50 @@ const CompactHealthScore = () => {
       {/* Expanded State */}
       {expanded && (
         <div className="p-6 pt-0 border-t border-slate-800 mt-1 animate-in fade-in slide-in-from-top-2">
-          <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Component Metrics</h4>
+          <div className="flex items-start justify-between mb-4">
+            <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Health Performance Score</h4>
+            <InfoTooltip
+              position="inline"
+              title="Health Performance Score Breakdown"
+              description="Each metric is converted to a 0–100 score based on how close it is to its industry target. Scores are weighted and averaged to produce the overall Health Score shown above."
+              calculation="Score 90–100: Excellent\nScore 70–89: Good\nScore 50–69: Needs Attention\nScore below 50: Critical\n\nHover the ⓘ next to each metric for its specific formula and target."
+            />
+          </div>
           <div className="space-y-3">
-            {healthMetrics.map((metric) => (
-              <div key={metric.name} className="flex items-center gap-4">
-                <span className="text-sm text-slate-300 w-40">{metric.name}</span>
-                <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full rounded-full ${
-                      metric.score >= metric.target ? 'bg-emerald-500' : 'bg-amber-500'
-                    }`}
-                    style={{ width: `${metric.score}%` }}
-                  />
+            {healthMetrics.map((metric) => {
+              const roundedScore = Math.round(metric.score * 100) / 100;
+              const info = metricInfo[metric.name];
+              const barColor = metric.score >= 70 ? 'bg-emerald-500' : metric.score >= 50 ? 'bg-amber-500' : 'bg-red-500';
+              return (
+                <div key={metric.name} className="flex items-center gap-3">
+                  {/* Label + tooltip */}
+                  <div className="flex items-center gap-1 w-44 flex-shrink-0">
+                    <span className="text-sm text-slate-300 truncate">{metric.name}</span>
+                    {info && (
+                      <InfoTooltip
+                        position="inline"
+                        title={info.title}
+                        description={info.description}
+                        calculation={info.calculation}
+                      />
+                    )}
+                  </div>
+                  {/* Bar */}
+                  <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${barColor}`}
+                      style={{ width: `${roundedScore}%` }}
+                    />
+                  </div>
+                  {/* Score label */}
+                  <span className="text-sm font-bold text-white w-24 text-right whitespace-nowrap">
+                    Score: {roundedScore.toFixed(2)}/100
+                  </span>
+                  {/* Weight */}
+                  <span className="text-xs text-slate-500 w-14 text-right">({metric.weight}% wt)</span>
                 </div>
-                <span className="text-sm font-bold text-white w-12 text-right">{metric.score}</span>
-                <span className="text-xs text-slate-500 w-12">({metric.weight}%)</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
