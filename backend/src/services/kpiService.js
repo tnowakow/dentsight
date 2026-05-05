@@ -2,11 +2,62 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 /**
+ * Calculate health score (0-100) from weighted KPI metrics.
+ * 
+ * Weights and targets:
+ *   netCollectionRate  25%  target 95  higher=better
+ *   caseAcceptance     20%  target 70  higher=better
+ *   denialRate         15%  target 5   lower=better
+ *   noShowRate         15%  target 8   lower=better
+ *   costPerChairHour   10%  target 50  lower=better
+ *   dso                15%  target 30  lower=better
+ */
+function calculateHealthScore(kpis) {
+  const {
+    netCollectionRate,
+    caseAcceptance,
+    denialRate,
+    noShowRate,
+    costPerChairHour,
+    dso
+  } = kpis;
+
+  let totalWeight = 0;
+  let weightedScore = 0;
+
+  function addMetric(value, weight, target, higherIsBetter, cap = 100) {
+    if (value === null || value === undefined) return;
+    let score;
+    if (higherIsBetter) {
+      // Score = min(value / target, 1) * 100
+      score = Math.min(value / target, 1) * 100;
+    } else {
+      // Score = max(0, 2 - value / target) * 50  — 100 at 0, 50 at target, 0 at 2x target
+      score = Math.max(0, (2 - value / target) / 1) * 50;
+      score = Math.min(score, 100);
+    }
+    weightedScore += score * weight;
+    totalWeight += weight;
+  }
+
+  addMetric(netCollectionRate, 0.25, 95, true);
+  addMetric(caseAcceptance, 0.20, 70, true);
+  addMetric(denialRate, 0.15, 5, false);
+  addMetric(noShowRate, 0.15, 8, false);
+  addMetric(costPerChairHour, 0.10, 50, false);
+  addMetric(dso, 0.15, 30, false);
+
+  if (totalWeight === 0) return null;
+
+  return Math.round(weightedScore / totalWeight);
+}
+
+/**
  * Calculate all KPIs for a practice or company
  */
 async function calculatePracticeKPIs(practiceId, companyId) {
   const now = new Date();
-  
+
   // Determine which practices to query
   let practiceIds;
   if (companyId) {
@@ -23,7 +74,7 @@ async function calculatePracticeKPIs(practiceId, companyId) {
 
   // Calculate metrics for each practice
   const kpis = {};
-  
+
   for (const pid of practiceIds) {
     kpis[pid] = await calculateSinglePracticeKPIs(pid, now);
   }
@@ -32,176 +83,63 @@ async function calculatePracticeKPIs(practiceId, companyId) {
 }
 
 async function calculateSinglePracticeKPIs(practiceId, now) {
-  const thirtyDaysAgo = new Date(now);
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  
   const ninetyDaysAgo = new Date(now);
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
-  // 1. Net Collection Rate (from metrics table)
-  const netCollectionMetric = await prisma.metric.findFirst({
+  // Pull all known metrics for this practice in one query for efficiency
+  const metricRows = await prisma.metric.findMany({
     where: {
       practiceId,
-      metricName: 'net_collection_rate',
       metricDate: { gte: ninetyDaysAgo }
     },
     orderBy: { metricDate: 'desc' }
   });
 
-  // 2. Cost by Chair Hour (from expenses and appointments)
-  const costByChairHour = await calculateCostPerChairHour(practiceId, thirtyDaysAgo);
-
-  // 3. Denial Rate (from metrics table or calculated from procedures)
-  const denialMetric = await prisma.metric.findFirst({
-    where: {
-      practiceId,
-      metricName: 'denial_rate',
-      metricDate: { gte: ninetyDaysAgo }
-    },
-    orderBy: { metricDate: 'desc' }
-  });
-
-  // 4. Case Acceptance Rate (from appointments)
-  const caseAcceptance = await calculateCaseAcceptanceRate(practiceId, thirtyDaysAgo);
-
-  // 5. DSO (Days Sales Outstanding - from metrics table)
-  const dsoMetric = await prisma.metric.findFirst({
-    where: {
-      practiceId,
-      metricName: 'dso',
-      metricDate: { gte: ninetyDaysAgo }
-    },
-    orderBy: { metricDate: 'desc' }
-  });
-
-  // 6. Hygiene Re-book Rate (from appointments)
-  const hygieneRebook = await calculateHygieneRecareRate(practiceId, thirtyDaysAgo);
-
-  // 7. Unscheduled Treatment Value (from procedures)
-  const unscheduledValue = await calculateUnscheduledTreatmentValue(practiceId, thirtyDaysAgo);
-
-  // 8. Monthly Production (from procedures)
-  const monthlyProduction = await calculateMonthlyProduction(practiceId, now);
-
-  return {
-    netCollectionRate: netCollectionMetric ? parseFloat(netCollectionMetric.metricValue) : null,
-    costPerChairHour: costByChairHour,
-    denialRate: denialMetric ? parseFloat(denialMetric.metricValue) : null,
-    caseAcceptanceRate: caseAcceptance,
-    dso: dsoMetric ? parseInt(dsoMetric.metricValue) : null,
-    hygieneRecareRate: hygieneRebook,
-    unscheduledTreatmentValue: unscheduledValue,
-    monthlyProduction: monthlyProduction
-  };
-}
-
-async function calculateCostPerChairHour(practiceId, startDate) {
-  // Total expenses over period / total chair hours
-  const totalExpenses = await prisma.expense.aggregate({
-    where: {
-      practiceId,
-      expenseDate: { gte: startDate }
-    },
-    _sum: { amount: true }
-  });
-
-  // Get total appointment duration (chair time)
-  const appointments = await prisma.appointment.findMany({
-    where: {
-      practiceId,
-      time: { gte: startDate }
-    },
-    select: {
-      productionValue: true,
-      procedureCodes: true
+  // Build a lookup map: metricName → most recent value
+  const latestMetrics = {};
+  for (const row of metricRows) {
+    if (!(row.metricName in latestMetrics)) {
+      latestMetrics[row.metricName] = parseFloat(row.metricValue);
     }
-  });
-
-  // Estimate chair hours based on appointment count (average 30 min per appt)
-  const totalChairHours = appointments.length * 0.5; // 30 minutes each
-  
-  if (totalChairHours === 0 || !totalExpenses._sum.amount) {
-    return null;
   }
 
-  return parseFloat(totalExpenses._sum.amount) / totalChairHours;
-}
+  const netCollectionRate = latestMetrics['net_collection_rate'] ?? null;
+  const costPerChairHour = latestMetrics['cost_per_chair_hour'] ?? null;
+  const denialRate = latestMetrics['denial_rate'] ?? null;
+  const caseAcceptance = latestMetrics['case_acceptance_rate'] ?? null;
+  const dso = latestMetrics['dso'] !== undefined ? Math.round(latestMetrics['dso']) : null;
+  const noShowRate = latestMetrics['no_show_rate'] ?? null;
+  const monthlyProduction = latestMetrics['monthly_production'] ?? null;
+  const unscheduledTreatmentValue = latestMetrics['unscheduled_treatment_value'] ?? null;
 
-async function calculateCaseAcceptanceRate(practiceId, startDate) {
-  // Cases accepted / cases presented
-  const appointments = await prisma.appointment.findMany({
-    where: {
-      practiceId,
-      time: { gte: startDate }
-    },
-    select: {
-      status: true,
-      productionValue: true
-    }
-  });
+  const kpiSnapshot = {
+    netCollectionRate,
+    costPerChairHour,
+    denialRate,
+    caseAcceptance,
+    dso,
+    noShowRate,
+    monthlyProduction,
+    unscheduledTreatmentValue
+  };
 
-  if (appointments.length === 0) return null;
+  const healthScore = calculateHealthScore(kpiSnapshot);
 
-  const accepted = appointments.filter(a => 
-    a.status === 'completed' || a.status === 'accepted'
-  ).length;
-
-  return Math.round((accepted / appointments.length) * 100);
-}
-
-async function calculateHygieneRecareRate(practiceId, startDate) {
-  // Patients who returned for hygiene within 6 months / total hygiene patients
-  const hygieneAppointments = await prisma.appointment.findMany({
-    where: {
-      practiceId,
-      time: { gte: startDate },
-      appointmentType: 'hygiene'
-    }
-  });
-
-  if (hygieneAppointments.length === 0) return null;
-
-  // Count unique patients who had hygiene visits
-  const patientIds = new Set(hygieneAppointments.map(a => a.patientHash));
-  
-  // For simplicity, assume all returned (would need more complex logic for true recare rate)
-  return Math.round(85 - Math.random() * 10); // Placeholder until we have better data
-}
-
-async function calculateUnscheduledTreatmentValue(practiceId, startDate) {
-  // Sum of production value from unscheduled appointments
-  const procedures = await prisma.procedure.findMany({
-    where: {
-      practiceId,
-      time: { gte: startDate },
-      status: 'completed'
-    }
-  });
-
-  // Filter for non-hygiene procedures (unscheduled)
-  const unscheduledProcedures = procedures.filter(p => 
-    !p.procedureCode.startsWith('D1') && // Not hygiene codes
-    p.productionValue > 0
-  );
-
-  return unscheduledProcedures.reduce((sum, p) => sum + parseFloat(p.productionValue), 0);
-}
-
-async function calculateMonthlyProduction(practiceId, now) {
-  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  
-  const procedures = await prisma.procedure.findMany({
-    where: {
-      practiceId,
-      time: { gte: firstOfMonth }
-    },
-    select: { productionValue: true }
-  });
-
-  return procedures.reduce((sum, p) => sum + parseFloat(p.productionValue), 0);
+  return {
+    healthScore,
+    netCollectionRate,
+    costPerChairHour,
+    denialRate,
+    caseAcceptance,
+    dso,
+    noShowRate,
+    monthlyProduction,
+    unscheduledTreatmentValue
+  };
 }
 
 module.exports = {
   calculatePracticeKPIs,
-  calculateSinglePracticeKPIs
+  calculateSinglePracticeKPIs,
+  calculateHealthScore
 };

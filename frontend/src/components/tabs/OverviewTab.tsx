@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDentsightStore } from '../../store/useDentsightStore';
-import { fetchAlerts, fetchMetrics, fetchValuation } from '../../services/api';
+import { fetchAlerts, fetchMetrics, fetchValuation, fetchKpiData } from '../../services/api';
 import { AlertCard } from '../ui/AlertCard';
 import { BenchmarkIndicator } from '../ui/BenchmarkIndicator';
 import { InfoTooltip } from '../ui/InfoTooltip';
@@ -12,6 +12,7 @@ export const OverviewTab = () => {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [metrics, setMetrics] = useState<any[]>([]);
   const [valuation, setValuation] = useState<any>(null);
+  const [kpiData, setKpiData] = useState<any>(null);
 
   useEffect(() => {
     if (!selectedCompanyId) return;
@@ -39,6 +40,10 @@ export const OverviewTab = () => {
         // Fetch valuation
         const valuationData = await fetchValuation(selectedCompanyId);
         setValuation(valuationData);
+
+        // Fetch KPI data
+        const kpiResponse = await fetchKpiData(selectedCompanyId);
+        setKpiData(kpiResponse);
       } catch (error) {
         console.error('Error fetching overview data:', error);
       } finally {
@@ -49,16 +54,16 @@ export const OverviewTab = () => {
     fetchData();
   }, [selectedCompanyId]);
 
-  // Calculate health score from metrics (simplified)
-  const healthScore = metrics.length > 0 ? Math.round(metrics.reduce((sum, m) => sum + (m.metricValue || 0), 0) / metrics.length) : 84;
+  // Health score from KPI data
+  const healthScore = kpiData?.healthScore ?? (metrics.length > 0 ? Math.round(metrics.reduce((sum, m) => sum + (m.metricValue || 0), 0) / metrics.length) : null);
   
-  // Quick stats calculations
+  // Quick stats from KPI data with fallbacks
   const quickStats = {
-    monthlyProduction: valuation?.revenue ? valuation.revenue / 12 : 125000,
-    unscheduledTreatmentValue: 45000,
-    noShowRate: 8.5,
-    caseAcceptance: 72,
-    dso: 42,
+    monthlyProduction: kpiData?.monthlyProduction ?? (valuation?.revenue ? valuation.revenue / 12 : null),
+    unscheduledTreatmentValue: kpiData?.unscheduledTreatmentValue ?? null,
+    noShowRate: kpiData?.noShowRate ?? null,
+    caseAcceptance: kpiData?.caseAcceptance ?? null,
+    dso: kpiData?.dso ?? null,
   };
 
   if (isLoading) {
@@ -96,27 +101,27 @@ export const OverviewTab = () => {
         <div className="lg:col-span-1 bg-slate-900 p-8 rounded-2xl border border-slate-800 flex flex-col items-center justify-center text-center space-y-4">
           <h3 className="text-slate-400 font-medium uppercase text-xs tracking-widest">Health Score</h3>
           <div className="flex items-center gap-3">
-            <span className="text-5xl font-black text-white">{healthScore}/100</span>
+            <span className="text-5xl font-black text-white">{healthScore != null ? `${healthScore}/100` : '—'}</span>
             <span className="text-slate-600 text-2xl">•</span>
-            <span className="text-xl font-semibold text-emerald-500">
-              {healthScore >= 80 ? 'Good Standing' : healthScore >= 60 ? 'Needs Attention' : 'Critical'}
+            <span className={`text-xl font-semibold ${healthScore == null ? 'text-slate-500' : healthScore >= 80 ? 'text-emerald-500' : healthScore >= 60 ? 'text-yellow-500' : 'text-red-500'}`}>
+              {healthScore == null ? '—' : healthScore >= 80 ? 'Good Standing' : healthScore >= 60 ? 'Needs Attention' : 'Critical'}
             </span>
             <span className="text-slate-500 ml-1">›</span>
           </div>
           <p className="text-sm text-slate-400">
             Overall practice stability is{' '}
-            <span className={healthScore >= 80 ? 'text-emerald-500 font-semibold' : healthScore >= 60 ? 'text-yellow-500 font-semibold' : 'text-red-500 font-semibold'}>
-              {healthScore >= 80 ? 'High' : healthScore >= 60 ? 'Moderate' : 'Low'}
+            <span className={healthScore == null ? 'text-slate-500 font-semibold' : healthScore >= 80 ? 'text-emerald-500 font-semibold' : healthScore >= 60 ? 'text-yellow-500 font-semibold' : 'text-red-500 font-semibold'}>
+              {healthScore == null ? 'Unknown' : healthScore >= 80 ? 'High' : healthScore >= 60 ? 'Moderate' : 'Low'}
             </span>
           </p>
         </div>
 
         <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
-            { label: 'Net Collection Rate', value: '94%', trend: 'up' as const, target: '92%' },
-            { label: 'Cost by Chair Hour', value: '$42/hr', trend: 'stable' as const, target: '$50/hr' },
-            { label: 'Denial Rate', value: '5.4%', trend: 'stable' as const, target: '5%' },
-            { label: 'Case Acceptance', value: '72%', trend: 'up' as const, target: '70%' }
+            { label: 'Net Collection Rate', value: kpiData?.netCollectionRate != null ? `${kpiData.netCollectionRate}%` : '—', trend: 'up' as const, target: '92%' },
+            { label: 'Cost by Chair Hour', value: kpiData?.costPerChairHour != null ? `$${kpiData.costPerChairHour}/hr` : '—', trend: 'stable' as const, target: '$50/hr' },
+            { label: 'Denial Rate', value: kpiData?.denialRate != null ? `${kpiData.denialRate}%` : '—', trend: 'stable' as const, target: '5%' },
+            { label: 'Case Acceptance', value: kpiData?.caseAcceptance != null ? `${kpiData.caseAcceptance}%` : '—', trend: 'up' as const, target: '70%' }
           ].map((kpi, i) => {
             const tooltips = {
               'Net Collection Rate': {
@@ -177,7 +182,7 @@ export const OverviewTab = () => {
 
          <div className="grid grid-cols-2 gap-4">
             {[
-              { label: 'Monthly Prod.', value: formatCurrency(quickStats.monthlyProduction), icon: '💰', 
+              { label: 'Monthly Prod.', value: quickStats.monthlyProduction != null ? formatCurrency(quickStats.monthlyProduction) : '—', icon: '💰', 
                 tooltip: {
                   title: 'Monthly Production',
                   description: 'Total gross production (value of all dental services rendered) for the current month.',

@@ -209,6 +209,17 @@ export async function fetchMetricTrend(metricName: string, companyId?: string, m
   return response.json();
 }
 
+export async function fetchKpiData(companyId?: string): Promise<any> {
+  if (useMockData) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return { healthScore: 84, netCollectionRate: 94, costPerChairHour: 42, denialRate: 5.4, caseAcceptance: 72, monthlyProduction: 125000, unscheduledTreatmentValue: 45000, noShowRate: 8.5, dso: 42 };
+  }
+  const url = companyId ? `${API_BASE_URL}/kpi/company-overview?company_id=${companyId}` : `${API_BASE_URL}/kpi/overview`;
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Failed to fetch KPI data: ${response.statusText}`);
+  return response.json();
+}
+
 // Fetch operations data (denial rates, appointment metrics)
 export async function fetchOperationsData(companyId?: string): Promise<any> {
   if (useMockData) {

@@ -8,6 +8,7 @@ const valuationRoutes = require('./routes/valuationRoutes');
 const practiceRoutes = require('./routes/practiceRoutes');
 const companyRoutes = require('./routes/companyRoutes');
 const kpiRoutes = require('./routes/kpiRoutes');
+const recommendationsRoutes = require('./routes/recommendationsRoutes');
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use('/api/practice', practiceRoutes);
 app.use('/api/practices', practiceRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/kpi', kpiRoutes);
+app.use('/api/recommendations', recommendationsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
