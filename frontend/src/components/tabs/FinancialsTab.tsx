@@ -150,12 +150,12 @@ export const FinancialsTab = () => {
             <InfoTooltip 
               title="Practice Cost Metrics"
               description="Key cost indicators that measure practice efficiency and overhead management."
-              calculation="Cost per Chair Hour: Total overhead ÷ total chair hours (target: $40-50)\nSupply Cost %: Lab/supply costs ÷ production (target: 6-8%)\nLab Fee %: External lab fees ÷ production (target: 7-10%)" />
+              calculation="Cost per Chair Hour: Total overhead ÷ total chair hours (target: $200-250/hr)\nIndustry standard: healthy practices run $150-250/hr; above $300/hr signals overhead problems.\nSupply Cost %: Lab/supply costs ÷ production (target: 6-8%)\nLab Fee %: External lab fees ÷ production (target: 7-10%)" />
           </div>
           <div className="space-y-4">
             <div className="p-4 bg-slate-950 rounded-xl border border-slate-800/50 flex justify-between items-center">
               <span className="text-sm text-slate-400">Cost per Chair Hour</span>
-              <span className="text-xl font-bold text-white">${costAnalysis.costPerChairHour}</span>
+              <span className="text-xl font-bold text-white">${(+costAnalysis.costPerChairHour).toFixed(2)}/hr</span>
             </div>
             <div className="p-4 bg-slate-950 rounded-xl border border-slate-800/50 flex justify-between items-center">
               <span className="text-sm text-slate-400">Supply Cost %</span>

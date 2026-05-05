@@ -9,7 +9,7 @@ const fetchKpiData = async (companyId: string) => {
   if (!response.ok) throw new Error('Failed to fetch KPIs');
   return response.json();
 };
-import { formatCurrency } from './utils/formatting';
+import { formatCurrency, formatKpiPercent, formatChairHour } from './utils/formatting';
 import { CompanySelector } from './components/CompanySelector';
 import { 
   Home, Activity, DollarSign, Calculator, ChevronDown, Calendar, HelpCircle, 
@@ -243,12 +243,14 @@ const CompactHealthScore = () => {
       .then((data: any) => {
         if (data?.healthScore != null) setHealthScore(data.healthScore);
         const metrics = [
-          { name: 'Net Collection Rate', score: data?.netCollectionRate ?? 0, weight: 25, target: 92 },
-          { name: 'Case Acceptance', score: data?.caseAcceptance ?? 0, weight: 20, target: 70 },
-          { name: 'Denial Rate', score: data?.denialRate != null ? Math.max(0, 100 - data.denialRate * 10) : 0, weight: 15, target: 95 },
-          { name: 'No-Show Rate', score: data?.noShowRate != null ? Math.max(0, 100 - data.noShowRate * 5) : 0, weight: 15, target: 92 },
-          { name: 'Cost per Chair Hour', score: data?.costPerChairHour != null ? Math.max(0, 100 - (data.costPerChairHour - 40)) : 0, weight: 10, target: 85 },
-          { name: 'Days Sales Outstanding', score: data?.dso != null ? Math.max(0, 100 - data.dso) : 0, weight: 15, target: 85 },
+          // Scores mirror kpiService.js formula so the panel matches the backend health score
+          { name: 'Net Collection Rate', score: data?.netCollectionRate != null ? Math.min(100, (data.netCollectionRate / 95) * 100) : 0, weight: 25, target: 95 },
+          { name: 'Case Acceptance', score: data?.caseAcceptance != null ? Math.min(100, (data.caseAcceptance / 70) * 100) : 0, weight: 20, target: 70 },
+          { name: 'Denial Rate', score: data?.denialRate != null ? Math.max(0, Math.min(100, (2 - data.denialRate / 5) * 50)) : 0, weight: 15, target: 5 },
+          { name: 'No-Show Rate', score: data?.noShowRate != null ? Math.max(0, Math.min(100, (2 - data.noShowRate / 8) * 50)) : 0, weight: 15, target: 8 },
+          // Industry standard: $150-250/hr overhead per chair. Target $250 = good practice.
+          { name: 'Cost per Chair Hour', score: data?.costPerChairHour != null ? Math.max(0, Math.min(100, (2 - data.costPerChairHour / 250) * 50)) : 0, weight: 10, target: 250 },
+          { name: 'Days Sales Outstanding', score: data?.dso != null ? Math.max(0, Math.min(100, (2 - data.dso / 30) * 50)) : 0, weight: 15, target: 30 },
         ];
         setHealthMetrics(metrics);
       })
@@ -491,25 +493,26 @@ const OverviewTab = () => {
         {[
           { 
             label: 'Net Collection', 
-            value: kpiData.netCollectionRate != null ? `${kpiData.netCollectionRate}%` : '—', 
+            value: formatKpiPercent(kpiData.netCollectionRate), 
             trend: (kpiData.netCollectionRate ?? 0) >= 92 ? 'up' as const : 'down' as const, 
             target: '92%' 
           },
           { 
+            // Industry accurate: total overhead / chair hours. Healthy = $150-250/hr
             label: 'Cost by Chair Hour', 
-            value: kpiData.costPerChairHour != null ? `$${kpiData.costPerChairHour}/hr` : '—', 
-            trend: (kpiData.costPerChairHour ?? 100) <= 50 ? 'up' as const : 'down' as const, 
-            target: '$50/hr'
+            value: formatChairHour(kpiData.costPerChairHour), 
+            trend: (kpiData.costPerChairHour ?? 999) <= 250 ? 'up' as const : 'down' as const, 
+            target: '$250/hr'
           },
           { 
             label: 'Denial Rate', 
-            value: kpiData.denialRate != null ? `${kpiData.denialRate}%` : '—', 
+            value: formatKpiPercent(kpiData.denialRate), 
             trend: (kpiData.denialRate ?? 100) <= 5 ? 'up' as const : 'down' as const, 
             target: '5%' 
           },
           { 
             label: 'Case Acceptance', 
-            value: kpiData.caseAcceptance != null ? `${kpiData.caseAcceptance}%` : '—', 
+            value: formatKpiPercent(kpiData.caseAcceptance), 
             trend: (kpiData.caseAcceptance ?? 0) >= 70 ? 'up' as const : 'down' as const, 
             target: '70%' 
           }
@@ -546,9 +549,9 @@ const OverviewTab = () => {
         {[
           { label: 'Monthly Prod.', value: kpiData.monthlyProduction ? formatCurrency(kpiData.monthlyProduction) : '—', icon: DollarIcon },
           { label: 'Unscheduled', value: kpiData.unscheduledTreatmentValue ? formatCurrency(kpiData.unscheduledTreatmentValue) : '—', icon: Clock },
-          { label: 'No-Show Rate', value: kpiData.noShowRate != null ? `${kpiData.noShowRate}%` : '—', icon: AlertTriangle },
-          { label: 'Case Acceptance', value: kpiData.caseAcceptance != null ? `${kpiData.caseAcceptance}%` : '—', icon: CheckCircle2 },
-          { label: 'DSO', value: kpiData.dso != null ? `${kpiData.dso} days` : '—', icon: Calendar },
+          { label: 'No-Show Rate', value: formatKpiPercent(kpiData.noShowRate), icon: AlertTriangle },
+          { label: 'Case Acceptance', value: formatKpiPercent(kpiData.caseAcceptance), icon: CheckCircle2 },
+          { label: 'DSO', value: kpiData.dso != null ? `${(+kpiData.dso).toFixed(2)} days` : '—', icon: Calendar },
         ].map((stat, i) => (
           <div key={i} className="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col items-center text-center">
             <stat.icon className="w-5 h-5 text-blue-500 mb-2" />

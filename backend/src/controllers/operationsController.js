@@ -79,10 +79,11 @@ exports.getOperationsData = async (req, res) => {
       };
     }
 
+    const fmt2 = (v) => v != null ? `${(+v).toFixed(2)}%` : '—';
     const appointmentMetrics = [
       { 
         metric: 'No-Show Rate', 
-        currentValue: avgKpis.noShowRate != null ? `${avgKpis.noShowRate}%` : '—', 
+        currentValue: fmt2(avgKpis.noShowRate),
         trend: (avgKpis.noShowRate ?? 100) <= 8 ? 'up' : 'down',
         benchmark: '<8%' 
       },
@@ -94,7 +95,7 @@ exports.getOperationsData = async (req, res) => {
       },
       { 
         metric: 'Case Acceptance', 
-        currentValue: avgKpis.caseAcceptance != null ? `${avgKpis.caseAcceptance}%` : '—', 
+        currentValue: fmt2(avgKpis.caseAcceptance),
         trend: (avgKpis.caseAcceptance ?? 0) >= 70 ? 'up' : 'down',
         benchmark: '>70%' 
       },

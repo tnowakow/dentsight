@@ -89,15 +89,16 @@ exports.getCompanyOverview = async (req, res) => {
       unscheduledTreatmentValue: (acc.unscheduledTreatmentValue || 0) + (data.unscheduledTreatmentValue || 0),
     }), {});
 
+    const round2 = (n) => Math.round(n * 100) / 100;
     res.json({
       company_id,
       healthScore: Math.round(summed.healthScore / count),
-      netCollectionRate: Math.round((summed.netCollectionRate / count) * 10) / 10,
-      costPerChairHour: Math.round((summed.costPerChairHour / count) * 10) / 10,
-      denialRate: Math.round((summed.denialRate / count) * 10) / 10,
-      caseAcceptance: Math.round((summed.caseAcceptance / count) * 10) / 10,
-      noShowRate: Math.round((summed.noShowRate / count) * 10) / 10,
-      dso: Math.round(summed.dso / count),
+      netCollectionRate: round2(summed.netCollectionRate / count),
+      costPerChairHour: round2(summed.costPerChairHour / count),
+      denialRate: round2(summed.denialRate / count),
+      caseAcceptance: round2(summed.caseAcceptance / count),
+      noShowRate: round2(summed.noShowRate / count),
+      dso: round2(summed.dso / count),
       monthlyProduction: Math.round(summed.monthlyProduction),
       unscheduledTreatmentValue: Math.round(summed.unscheduledTreatmentValue)
     });

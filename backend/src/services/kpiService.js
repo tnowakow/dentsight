@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
  *   caseAcceptance     20%  target 70  higher=better
  *   denialRate         15%  target 5   lower=better
  *   noShowRate         15%  target 8   lower=better
- *   costPerChairHour   10%  target 50  lower=better
+ *   costPerChairHour   10%  target 250 lower=better  (industry: $150-250/hr total overhead per chair)
  *   dso                15%  target 30  lower=better
  */
 function calculateHealthScore(kpis) {
@@ -44,7 +44,8 @@ function calculateHealthScore(kpis) {
   addMetric(caseAcceptance, 0.20, 70, true);
   addMetric(denialRate, 0.15, 5, false);
   addMetric(noShowRate, 0.15, 8, false);
-  addMetric(costPerChairHour, 0.10, 50, false);
+  // Industry standard: total overhead / chair operating hours. Healthy practices run $150-250/hr.
+  addMetric(costPerChairHour, 0.10, 250, false);
   addMetric(dso, 0.15, 30, false);
 
   if (totalWeight === 0) return null;

@@ -13,9 +13,9 @@ const defaultProviderProduction = [
 ];
 
 const defaultAppointmentMetrics = [
-  { metric: 'No-Show Rate', currentValue: '8.5%', trend: 'down', benchmark: '<8%' },
-  { metric: 'Cancellation Rate', currentValue: '7.2%', trend: 'up', benchmark: '<10%' },
-  { metric: 'Case Acceptance', currentValue: '68%', trend: 'down', benchmark: '>70%' },
+  { metric: 'No-Show Rate', currentValue: '8.50%', trend: 'down', benchmark: '<8%' },
+  { metric: 'Cancellation Rate', currentValue: '7.20%', trend: 'up', benchmark: '<10%' },
+  { metric: 'Case Acceptance', currentValue: '68.00%', trend: 'down', benchmark: '>70%' },
 ];
 
 const defaultHygieneTrend = [
