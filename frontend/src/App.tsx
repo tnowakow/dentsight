@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useParams } from 'react-router-dom';
 import { useDentsightStore, type DateFilter } from './store/useDentsightStore';
 import { fetchAlerts, fetchValuation, fetchRecommendations } from './services/api';
 
@@ -162,6 +162,11 @@ const GlobalHeader = () => {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-slate-800 bg-slate-950 py-4">
+            {/* Clinic selector on mobile */}
+            <div className="px-4 pb-3 border-b border-slate-800 mb-3">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Selected Clinic</p>
+              <CompanySelector />
+            </div>
             <nav className="flex flex-col gap-2 px-4">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path || (item.path === '/' && location.pathname === '');
@@ -200,9 +205,10 @@ interface PriorityCardProps {
   ctaText: string;
   ctaPath: string;
   severity: 'high' | 'medium' | 'low';
+  drillDownData?: any;
 }
 
-const PriorityCard: React.FC<PriorityCardProps> = ({ icon, headline, subtext, ctaText, ctaPath, severity }) => {
+const PriorityCard: React.FC<PriorityCardProps> = ({ icon, headline, subtext, ctaText, ctaPath, severity, drillDownData }) => {
   const severityStyles = {
     high: 'bg-amber-500/10 border-amber-500/30 hover:border-amber-500/50',
     medium: 'bg-blue-500/10 border-blue-500/30 hover:border-blue-500/50',
@@ -210,7 +216,7 @@ const PriorityCard: React.FC<PriorityCardProps> = ({ icon, headline, subtext, ct
   };
 
   return (
-    <Link to={ctaPath} className={`block p-6 rounded-xl border-2 transition-all ${severityStyles[severity]} group`}>
+    <Link to={ctaPath} state={{ priority: drillDownData }} className={`block p-6 rounded-xl border-2 transition-all ${severityStyles[severity]} group`}>
       <div className="flex items-start gap-4">
         <div className={`p-3 rounded-lg ${severity === 'high' ? 'bg-amber-500/20 text-amber-500' : severity === 'medium' ? 'bg-blue-500/20 text-blue-500' : 'bg-emerald-500/20 text-emerald-500'}`}>
           {icon}
@@ -357,8 +363,8 @@ const CompactHealthScore = () => {
                     />
                   </div>
                   {/* Score label */}
-                  <span className="text-sm font-bold text-white w-24 text-right whitespace-nowrap">
-                    Score: {roundedScore.toFixed(2)}/100
+                  <span className="text-sm font-bold text-white w-16 text-right whitespace-nowrap">
+                    {roundedScore.toFixed(2)}
                   </span>
                   {/* Weight */}
                   <span className="text-xs text-slate-500 w-14 text-right">({metric.weight}% wt)</span>
@@ -420,9 +426,18 @@ const RightRail = () => {
             {priorities.map((priority, i) => (
               <Link
                 key={i}
-                to={`/priorities/${priority.id}`}
+                to={`/priorities/${i}`}
+                state={{ priority }}
                 className="block p-3 rounded-lg bg-slate-950/50 hover:bg-slate-800 transition-colors border border-slate-800/50 hover:border-blue-500/30"
               >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`text-xs font-bold uppercase px-1.5 py-0.5 rounded ${
+                    priority.priority === 'high' ? 'bg-red-500/20 text-red-400' :
+                    priority.priority === 'medium' ? 'bg-amber-500/20 text-amber-400' :
+                    'bg-blue-500/20 text-blue-400'
+                  }`}>{priority.priority}</span>
+                  <span className="text-xs text-slate-500">{priority.category}</span>
+                </div>
                 <p className="text-sm text-white font-medium">{priority.title}</p>
                 <p className="text-xs text-slate-500 mt-1 line-clamp-2">{priority.description}</p>
               </Link>
@@ -494,15 +509,24 @@ const OverviewTab = () => {
     fetchData();
   }, [selectedCompanyId]);
 
-  // Convert alerts to priorities for hero section
-  const priorityAlerts = alerts.map(alert => ({
+  // Convert alerts to hero priority cards (normalised to recommendation shape for drill-down)
+  const priorityAlerts = alerts.map((alert, i) => ({
     id: alert.id,
-    headline: alert.headline || alert.description,
-    subtext: alert.subtext || '',
+    headline: alert.headline || alert.metricName || 'Alert',
+    subtext: alert.subtext || alert.message || '',
     type: alert.type || 'info',
     severity: alert.severity || 2,
-    ctaText: (alert.type === 'warning' || alert.severity === 1) ? 'Address Issue' : 'View Details',
-    ctaPath: `/priorities/${alert.id}`,
+    ctaText: (alert.type === 'warning' || alert.severity >= 1) ? 'Address Issue' : 'View Details',
+    ctaPath: `/priorities/alert-${i}`,
+    // Full object passed via router state so drill-down can render it
+    drillDownData: {
+      title: alert.headline || alert.metricName || 'Alert',
+      description: alert.subtext || alert.message || '',
+      priority: alert.severity >= 2 ? 'high' : alert.severity >= 1 ? 'medium' : 'low',
+      category: 'Alert',
+      actions: [],
+      potentialImpact: null,
+    },
   }));
 
   if (isLoading) {
@@ -538,7 +562,8 @@ const OverviewTab = () => {
               subtext={alert.subtext}
               ctaText={alert.ctaText}
               ctaPath={alert.ctaPath}
-              severity={alert.severity}
+              severity={alert.severity >= 2 ? 'high' : alert.severity >= 1 ? 'medium' : 'low'}
+              drillDownData={alert.drillDownData}
             />
           ))}
         </div>
@@ -630,11 +655,103 @@ const OverviewTab = () => {
 // ============================================================================
 
 const PriorityDetailPage = () => {
+  const { state } = useLocation() as { state: { priority?: any } | null };
+  const { id } = useParams<{ id: string }>();
+  const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
+  const [priority, setPriority] = useState<any>(state?.priority || null);
+  const [loading, setLoading] = useState(!state?.priority);
+
+  useEffect(() => {
+    // If we navigated directly (no router state), refetch and find by index
+    if (!state?.priority && selectedCompanyId) {
+      fetchRecommendations(selectedCompanyId)
+        .then((recs) => {
+          const idx = parseInt(id || '0', 10);
+          setPriority(recs[idx] || null);
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [id, selectedCompanyId]);
+
+  const priorityColors = {
+    high: { badge: 'bg-red-500/20 text-red-400 border-red-500/30', bar: 'border-red-500/40' },
+    medium: { badge: 'bg-amber-500/20 text-amber-400 border-amber-500/30', bar: 'border-amber-500/40' },
+    low: { badge: 'bg-blue-500/20 text-blue-400 border-blue-500/30', bar: 'border-blue-500/40' },
+  };
+  const colors = priorityColors[(priority?.priority as keyof typeof priorityColors) || 'low'];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="text-slate-400">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!priority) {
+    return (
+      <div className="space-y-4 animate-in fade-in duration-500">
+        <Link to="/" className="flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors">
+          <ChevronLeft className="w-4 h-4" /> Back to Overview
+        </Link>
+        <div className="bg-slate-900 rounded-xl border border-slate-800 p-8 text-center">
+          <p className="text-slate-400">Priority not found. It may have been resolved.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <h1 className="text-2xl font-bold text-white">Priority Details</h1>
-      <p className="text-slate-400">This is a placeholder for priority drill-down view.</p>
-      {/* TODO: wire to backend - fetch and display detailed priority information */}
+    <div className="max-w-2xl space-y-6 animate-in fade-in duration-500">
+      {/* Back */}
+      <Link to="/" className="flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors">
+        <ChevronLeft className="w-4 h-4" /> Back to Overview
+      </Link>
+
+      {/* Header */}
+      <div className={`bg-slate-900 rounded-xl border-2 ${colors.bar} p-6 space-y-3`}>
+        <div className="flex items-start gap-3 flex-wrap">
+          <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${colors.badge}`}>
+            {priority.priority} priority
+          </span>
+          <span className="text-xs font-medium text-slate-400 px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700">
+            {priority.category}
+          </span>
+        </div>
+        <h1 className="text-2xl font-bold text-white">{priority.title}</h1>
+        <p className="text-slate-300 leading-relaxed">{priority.description}</p>
+      </div>
+
+      {/* Action Steps */}
+      {priority.actions?.length > 0 && (
+        <div className="bg-slate-900 rounded-xl border border-slate-800 p-6 space-y-4">
+          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Action Steps</h2>
+          <ol className="space-y-3">
+            {priority.actions.map((action: string, i: number) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600/20 border border-blue-500/30 text-blue-400 text-xs font-bold flex items-center justify-center mt-0.5">
+                  {i + 1}
+                </span>
+                <span className="text-slate-300 text-sm leading-relaxed">{action}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {/* Potential Impact */}
+      {priority.potentialImpact && (
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-5 flex items-start gap-3">
+          <TrendingUp className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1">Potential Impact</p>
+            <p className="text-emerald-300 text-sm leading-relaxed">{priority.potentialImpact}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
