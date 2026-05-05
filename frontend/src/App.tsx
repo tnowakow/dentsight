@@ -314,6 +314,8 @@ const CompactHealthScore = () => {
         className="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors"
       >
         <div className="flex items-center gap-4">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:block">Health Performance Score</span>
+          <span className="text-slate-700 hidden sm:block">│</span>
           <span className="text-3xl font-black text-white">{healthScore}</span>
           <span className="text-slate-600 text-xl">•</span>
           <span className={`font-semibold ${verdict.color}`}>{verdict.text}</span>
@@ -411,14 +413,7 @@ const RightRail = () => {
 
   return (
     <aside className="w-80 flex-shrink-0 space-y-6">
-      {/* Date & Active Range */}
-      <div className="bg-slate-900 rounded-xl border border-slate-800 p-4">
-        <h3 className="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-1">{getDateFilterDisplayText(dateFilter)}</h3>
-        <p className="text-white font-medium">{formattedDate}</p>
-        <p className="text-xs text-slate-500 mt-1">Active range: Last 7 days</p>
-      </div>
-
-      {/* Recommended Actions */}
+      {/* Recommended Actions — top priority */}
       <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 space-y-3">
         <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Recommended Actions</h3>
         {priorities.length > 0 ? (
@@ -452,6 +447,13 @@ const RightRail = () => {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Date & Active Range */}
+      <div className="bg-slate-900 rounded-xl border border-slate-800 p-4">
+        <h3 className="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-1">{getDateFilterDisplayText(dateFilter)}</h3>
+        <p className="text-white font-medium">{formattedDate}</p>
+        <p className="text-xs text-slate-500 mt-1">Active range: Last 7 days</p>
       </div>
 
       {/* Last Refreshed */}
@@ -621,16 +623,7 @@ const OverviewTab = () => {
         ))}
       </section>
 
-      {/* 4. Valuation Preview Card */}
-      <section className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-xl text-white space-y-4 shadow-xl shadow-blue-900/20">
-        <h3 className="text-blue-100 font-medium uppercase text-xs tracking-widest">Valuation Range Preview</h3>
-        <div className="text-4xl font-bold">{valuationPreview}</div>
-        <Link to="/valuation" className="inline-block text-sm bg-white/20 hover:bg-white/30 transition-colors px-4 py-2 rounded-lg font-semibold backdrop-blur-md">
-          View Detailed Valuation →
-        </Link>
-      </section>
-
-      {/* 5. Quick Stats Grid */}
+      {/* 4. Quick Stats Grid */}
       <section className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
           { label: 'Monthly Prod.', value: kpiData.monthlyProduction ? formatCurrency(kpiData.monthlyProduction) : '—', icon: DollarIcon },
@@ -645,6 +638,15 @@ const OverviewTab = () => {
             <p className="text-sm font-bold text-white mt-1">{stat.value}</p>
           </div>
         ))}
+      </section>
+
+      {/* 5. Valuation Preview Card — bottom */}
+      <section className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-xl text-white space-y-4 shadow-xl shadow-blue-900/20">
+        <h3 className="text-blue-100 font-medium uppercase text-xs tracking-widest">Valuation Range Preview</h3>
+        <div className="text-4xl font-bold">{valuationPreview}</div>
+        <Link to="/valuation" className="inline-block text-sm bg-white/20 hover:bg-white/30 transition-colors px-4 py-2 rounded-lg font-semibold backdrop-blur-md">
+          View Detailed Valuation →
+        </Link>
       </section>
     </div>
   );

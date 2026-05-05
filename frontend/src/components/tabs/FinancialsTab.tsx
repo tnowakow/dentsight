@@ -9,10 +9,12 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
 // Default mock data for fallback
 const defaultDenialRates = [
-  { payer: 'United Healthcare', rate: 10.5 },
-  { payer: 'Delta Dental', rate: 4.2 },
-  { payer: 'Aetna', rate: 6.8 },
-  { payer: 'Cigna', rate: 3.1 },
+  { payer: 'United Healthcare', rate: 10.50 },
+  { payer: 'Aetna',            rate: 6.80 },
+  { payer: 'MetLife',          rate: 6.20 },
+  { payer: 'Guardian',         rate: 5.10 },
+  { payer: 'Delta Dental',     rate: 4.20 },
+  { payer: 'Cigna',            rate: 3.10 },
 ];
 
 const defaultProductionBreakdown = [
@@ -87,17 +89,34 @@ export const FinancialsTab = () => {
         </div>
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={denialRates} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={true} vertical={false} />
-              <XAxis type="number" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => formatPercent(v)} />
-              <YAxis dataKey="payer" type="category" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} width={100} />
-              <Tooltip 
-                cursor={{fill: '#1e293b'}}
-                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#f8fafc' }}
+            <BarChart data={denialRates} layout="vertical" margin={{ top: 5, right: 50, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} vertical={true} />
+              <XAxis
+                type="number"
+                stroke="#94a3b8"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v) => `${v.toFixed(1)}%`}
+                domain={[0, 'auto']}
               />
-              <Bar dataKey="rate" radius={[0, 4, 4, 0]}>
+              <YAxis
+                dataKey="payer"
+                type="category"
+                stroke="#94a3b8"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                width={130}
+              />
+              <Tooltip
+                cursor={{ fill: '#1e293b' }}
+                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f8fafc', borderRadius: '8px' }}
+                formatter={(value) => [`${Number(value).toFixed(2)}%`, 'Denial Rate']}
+              />
+              <Bar dataKey="rate" radius={[0, 4, 4, 0]} maxBarSize={28}>
                 {denialRates.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.rate > 8 ? '#f59e0b' : '#3b82f6'} />
+                  <Cell key={`cell-${index}`} fill={entry.rate > 8 ? '#f59e0b' : entry.rate > 5 ? '#3b82f6' : '#10b981'} />
                 ))}
               </Bar>
             </BarChart>
