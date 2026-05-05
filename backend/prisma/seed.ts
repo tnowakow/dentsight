@@ -134,24 +134,52 @@ async function main() {
         metricDate.setMonth(metricDate.getMonth() - monthsAgo);
         metricDate.setHours(0, 0, 0, 0);
 
-        // Monthly growth factor: values were proportionally lower further back
+        // Monthly growth factor drives production scaling
         const monthlyGrowthRate = scenario.growth / 12;
-        const historicFactor    = Math.pow(1 + monthlyGrowthRate, monthsAgo); // >1 means current is higher
-        const noise             = () => 0.97 + Math.random() * 0.06;          // ±3% random noise
+        const historicFactor    = Math.pow(1 + monthlyGrowthRate, monthsAgo);
+        const noise             = () => 0.98 + Math.random() * 0.04; // ±2% noise
 
-        // Revenue-linked metrics shrink/grow with the practice
-        const monthlyProd   = (monthlyProductionCurrent / historicFactor) * noise();
-        const unscheduled   = (unscheduledCurrent       / historicFactor) * noise();
+        // Revenue-linked metrics scale directly with growth trajectory
+        const monthlyProd  = (monthlyProductionCurrent / historicFactor) * noise();
+        const unscheduled  = (unscheduledCurrent       / historicFactor) * noise();
 
-        // Rate metrics: trend toward worse values historically for growing clinics
-        const trendNoise    = () => 0.98 + Math.random() * 0.04;
-        const collectionAdj = scenario.collection * 100 * (scenario.growth > 0 ? Math.pow(0.999, monthsAgo) : 1) * trendNoise();
-        const denialAdj     = scenario.denial     * 100 * (scenario.growth > 0 ? Math.pow(1.003, monthsAgo) : 1) * trendNoise();
-        const recareAdj     = scenario.recare     * 100 * (scenario.growth > 0 ? Math.pow(0.998, monthsAgo) : 1) * trendNoise();
-        const caseAdj       = caseAcceptanceCurrent    * (scenario.growth > 0 ? Math.pow(0.999, monthsAgo) : 1) * trendNoise();
-        const noShowAdj     = noShowRateCurrent        * (scenario.growth > 0 ? Math.pow(1.002, monthsAgo) : 1) * trendNoise();
-        const dsoAdj        = dsoCurrent               * (scenario.growth > 0 ? Math.pow(1.001, monthsAgo) : 1) * trendNoise();
-        const costAdj       = scenario.costPerHour     * (scenario.growth > 0 ? Math.pow(1.001, monthsAgo) : 1) * trendNoise();
+        // gf drives how much each rate metric changes month-over-month.
+        // Positive growth = improving metrics over time (current better than past).
+        // Negative growth = worsening metrics over time (past was better).
+        // Using linear historic factors for clear, visible month-to-month differences:
+        //   gf=+0.021 (High Growth 25%/yr): ~2% swing per month on key metrics
+        //   gf=+0.004 (Stable 5%/yr):       ~0.4% swing per month
+        //   gf=-0.008 (Declining -10%/yr):  ~0.8% swing per month
+        const gf = monthlyGrowthRate;
+
+        // Collection rate: higher-growth practices have been improving collections
+        const collectionAdj = Math.min(100, Math.max(80,
+          scenario.collection * 100 * (1 - gf * 0.6 * monthsAgo) * noise()));
+
+        // Denial rate: growing practices have been driving denials down (higher in the past)
+        const denialAdj = Math.max(0.5, Math.min(30,
+          scenario.denial * 100 * (1 + gf * 2.0 * monthsAgo) * noise()));
+
+        // Hygiene re-care: improving for growing practices
+        const recareAdj = Math.min(100, Math.max(50,
+          scenario.recare * 100 * (1 - gf * 0.4 * monthsAgo) * noise()));
+
+        // Case acceptance: growing practices have been improving
+        const caseAdj = Math.min(95, Math.max(40,
+          caseAcceptanceCurrent * (1 - gf * 0.5 * monthsAgo) * noise()));
+
+        // No-show rate: growing practices have driven no-shows down (higher in past)
+        const noShowAdj = Math.max(2, Math.min(25,
+          noShowRateCurrent * (1 + gf * 1.5 * monthsAgo) * noise()));
+
+        // DSO: growing practices have been improving A/R speed
+        const dsoAdj = Math.max(10, Math.min(90,
+          dsoCurrent * (1 + gf * 0.6 * monthsAgo) * noise()));
+
+        // Cost per chair: growing practices have been getting more efficient (cost was higher before)
+        const costAdj = Math.max(80,
+          scenario.costPerHour * (1 + gf * 0.8 * monthsAgo) * noise());
+
         const newPatientsAdj = Math.max(0, Math.floor(perPracticePatients * scenario.growth * 10 / historicFactor));
 
         allMonthRows.push(

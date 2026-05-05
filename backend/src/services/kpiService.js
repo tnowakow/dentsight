@@ -161,6 +161,11 @@ async function calculatePracticeKPIs(practiceId, companyId, dateFilter) {
   return kpis;
 }
 
+// Metrics where lower = better (averaged differently to make sense)
+const LOWER_IS_BETTER = new Set(['denial_rate', 'cost_per_chair_hour', 'no_show_rate', 'dso']);
+// Multi-month filters: average all snapshots in the window for a true period view
+const MULTI_MONTH_FILTERS = new Set(['this-quarter', 'ytd']);
+
 async function calculateSinglePracticeKPIs(practiceId, now, dateFilter) {
   // Get the apparent date range the user wants
   const apparentRange = getApparentDateRange(dateFilter);
@@ -179,11 +184,30 @@ async function calculateSinglePracticeKPIs(practiceId, now, dateFilter) {
     orderBy: { metricDate: 'desc' },
   });
 
-  // Build lookup: metricName → most recent value in the window
+  // For single-month filters: use the most recent snapshot in the window.
+  // For multi-month filters (this-quarter, ytd): average all monthly snapshots
+  // so the period genuinely reflects the full window, not just the latest month.
   const latestMetrics = {};
-  for (const row of metricRows) {
-    if (!(row.metricName in latestMetrics)) {
-      latestMetrics[row.metricName] = parseFloat(row.metricValue);
+  const isMultiMonth  = MULTI_MONTH_FILTERS.has(dateFilter);
+
+  if (!isMultiMonth) {
+    // Most-recent-in-window
+    for (const row of metricRows) {
+      if (!(row.metricName in latestMetrics)) {
+        latestMetrics[row.metricName] = parseFloat(row.metricValue);
+      }
+    }
+  } else {
+    // Average all monthly snapshots in the window
+    const sums   = {};
+    const counts = {};
+    for (const row of metricRows) {
+      const v = parseFloat(row.metricValue);
+      sums[row.metricName]   = (sums[row.metricName]   || 0) + v;
+      counts[row.metricName] = (counts[row.metricName] || 0) + 1;
+    }
+    for (const name of Object.keys(sums)) {
+      latestMetrics[name] = sums[name] / counts[name];
     }
   }
 
