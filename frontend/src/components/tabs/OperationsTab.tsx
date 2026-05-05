@@ -42,11 +42,11 @@ export const OperationsTab = () => {
         // Fetch operations data
         const opsData = await fetchOperationsData(selectedCompanyId);
         
-        // Update state with fetched data if available
-        if (opsData?.providerProduction && opsData.providerProduction.length > 0) {
+        // Update state with fetched data if available (null means API returned no data)
+        if (opsData?.providerProduction != null && opsData.providerProduction.length > 0) {
           setProviderProduction(opsData.providerProduction);
         }
-        if (opsData?.appointmentMetrics && opsData.appointmentMetrics.length > 0) {
+        if (opsData?.appointmentMetrics != null && opsData.appointmentMetrics.length > 0) {
           setAppointmentMetrics(opsData.appointmentMetrics);
         }
 

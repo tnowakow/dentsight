@@ -236,7 +236,7 @@ export async function fetchRecommendations(companyId?: string): Promise<any[]> {
   return response.json();
 }
 
-// Fetch operations data (denial rates, appointment metrics)
+// Fetch operations data (denial rates, appointment metrics, provider production)
 export async function fetchOperationsData(companyId?: string): Promise<any> {
   if (useMockData) {
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -247,12 +247,19 @@ export async function fetchOperationsData(companyId?: string): Promise<any> {
     };
   }
 
-  // Fetch metrics - reserved for future transformation
-  await fetchMetrics(companyId);
-
-  return {
-    denialRates: [],
-    appointmentMetrics: [],
-    providerProduction: []
-  };
+  const url = companyId 
+    ? `${API_BASE_URL}/operations?company_id=${companyId}`
+    : `${API_BASE_URL}/operations`;
+  
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn(`Operations API failed: ${response.statusText}`);
+      return { denialRates: null, appointmentMetrics: null, providerProduction: null, costAnalysis: null };
+    }
+    return response.json();
+  } catch (error) {
+    console.warn('Operations API error:', error);
+    return { denialRates: null, appointmentMetrics: null, providerProduction: null, costAnalysis: null };
+  }
 }

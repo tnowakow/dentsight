@@ -77,11 +77,36 @@ exports.getValuation = async (req, res) => {
         multipleHigh = 7.5;
         multipleCurrent = 7.25;
       }
+
+      // Try to fetch addbacks from database, fallback to defaults
+      let addbacksList = [
+        { name: 'Owner Salary Adjustment', amount: 120000, category: 'Owner Comp' },
+        { name: 'Personal Vehicle Lease', amount: 8000, category: 'One-time expense' },
+        { name: 'Non-recurring Marketing', amount: 5000, category: 'Marketing' },
+      ];
+      try {
+        const dbAddbacks = await prisma.addback.findMany({
+          where: { practiceId: { in: practices.map(p => p.id) } },
+          select: { name: true, amount: true, category: true }
+        });
+        if (dbAddbacks.length > 0) {
+          addbacksList = dbAddbacks.map(a => ({
+            name: a.name,
+            amount: parseFloat(a.amount) || 0,
+            category: a.category || 'Other'
+          }));
+        }
+      } catch (e) {
+        // Addback table may not exist in schema yet
+        console.log('Addbacks not available:', e.message);
+      }
+      const addbacksTotal = addbacksList.reduce((sum, a) => sum + a.amount, 0);
       
       res.json({
         ebitda: totalEBITDA,
         owner_comp_normalized: true,
-        addbacks_total: 23000,
+        addbacks: addbacksList,
+        addbacks_total: addbacksTotal,
         valuation_range: {
           low: totalEBITDA * multipleLow,       // Adjusted based on EBITDA
           high: totalEBITDA * multipleHigh,     // Adjusted based on EBITDA

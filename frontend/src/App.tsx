@@ -397,7 +397,7 @@ const OverviewTab = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [valuationPreview, setValuationPreview] = useState('$3.15M - $3.40M');
-  const [quickStats, setQuickStats] = useState<any>({});
+  const [kpiData, setKpiData] = useState<any>({});
 
   useEffect(() => {
     if (!selectedCompanyId) return;
@@ -418,20 +418,9 @@ const OverviewTab = () => {
           );
         }
 
-        // Fetch KPI data from backend
-        const kpiData = await fetchKpiData(selectedCompanyId);
-        if (kpiData?.quickStats) {
-          setQuickStats(kpiData.quickStats);
-        } else if (valuationData) {
-          // Fallback to valuation data if KPIs not available
-          setQuickStats({
-            monthlyProduction: valuationData.revenue ? Math.round(valuationData.revenue / 12) : null,
-            unscheduledTreatmentValue: null,
-            noShowRate: null,
-            caseAcceptance: null,
-            dso: null,
-          });
-        }
+        // Fetch KPI data from backend (fields are at root level, not nested)
+        const kpi = await fetchKpiData(selectedCompanyId);
+        setKpiData(kpi || {});
       } catch (error) {
         console.error('Error fetching overview data:', error);
       } finally {
@@ -500,10 +489,30 @@ const OverviewTab = () => {
       {/* 3. Secondary KPI Grid - Smaller, Denser */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: 'Net Collection', value: '94%', trend: 'up' as const, target: '92%' },
-          { label: 'Cost by Chair Hour', value: '$42/hr', trend: 'stable' as const, target: '$50/hr'},
-          { label: 'Denial Rate', value: '5.4%', trend: 'stable' as const, target: '5%' },
-          { label: 'Case Acceptance', value: '72%', trend: 'up' as const, target: '70%' }
+          { 
+            label: 'Net Collection', 
+            value: kpiData.netCollectionRate != null ? `${kpiData.netCollectionRate}%` : '—', 
+            trend: (kpiData.netCollectionRate ?? 0) >= 92 ? 'up' as const : 'down' as const, 
+            target: '92%' 
+          },
+          { 
+            label: 'Cost by Chair Hour', 
+            value: kpiData.costPerChairHour != null ? `$${kpiData.costPerChairHour}/hr` : '—', 
+            trend: (kpiData.costPerChairHour ?? 100) <= 50 ? 'up' as const : 'down' as const, 
+            target: '$50/hr'
+          },
+          { 
+            label: 'Denial Rate', 
+            value: kpiData.denialRate != null ? `${kpiData.denialRate}%` : '—', 
+            trend: (kpiData.denialRate ?? 100) <= 5 ? 'up' as const : 'down' as const, 
+            target: '5%' 
+          },
+          { 
+            label: 'Case Acceptance', 
+            value: kpiData.caseAcceptance != null ? `${kpiData.caseAcceptance}%` : '—', 
+            trend: (kpiData.caseAcceptance ?? 0) >= 70 ? 'up' as const : 'down' as const, 
+            target: '70%' 
+          }
         ].map((kpi: { label: string; value: string; trend: 'up' | 'down' | 'stable'; target: string }, i) => (
           <Link
             key={i}
@@ -535,11 +544,11 @@ const OverviewTab = () => {
       {/* 5. Quick Stats Grid */}
       <section className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: 'Monthly Prod.', value: quickStats.monthlyProduction ? formatCurrency(quickStats.monthlyProduction) : '—', icon: DollarIcon },
-          { label: 'Unscheduled', value: quickStats.unscheduledTreatmentValue ? formatCurrency(quickStats.unscheduledTreatmentValue) : '—', icon: Clock },
-          { label: 'No-Show Rate', value: quickStats.noShowRate ? `${quickStats.noShowRate}%` : '—', icon: AlertTriangle },
-          { label: 'Case Acceptance', value: quickStats.caseAcceptance ? `${quickStats.caseAcceptance}%` : '—', icon: CheckCircle2 },
-          { label: 'DSO', value: quickStats.dso ? `${quickStats.dso} days` : '—', icon: Calendar },
+          { label: 'Monthly Prod.', value: kpiData.monthlyProduction ? formatCurrency(kpiData.monthlyProduction) : '—', icon: DollarIcon },
+          { label: 'Unscheduled', value: kpiData.unscheduledTreatmentValue ? formatCurrency(kpiData.unscheduledTreatmentValue) : '—', icon: Clock },
+          { label: 'No-Show Rate', value: kpiData.noShowRate != null ? `${kpiData.noShowRate}%` : '—', icon: AlertTriangle },
+          { label: 'Case Acceptance', value: kpiData.caseAcceptance != null ? `${kpiData.caseAcceptance}%` : '—', icon: CheckCircle2 },
+          { label: 'DSO', value: kpiData.dso != null ? `${kpiData.dso} days` : '—', icon: Calendar },
         ].map((stat, i) => (
           <div key={i} className="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col items-center text-center">
             <stat.icon className="w-5 h-5 text-blue-500 mb-2" />

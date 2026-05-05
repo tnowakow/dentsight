@@ -37,8 +37,8 @@ export const ValuationTab = () => {
   const marketMultiple = valuationData?.market_multiple || { low: 6.5, high: 7.0, current: 6.8 };
   const disclaimer = valuationData?.disclaimer || 'Informational estimate only — not a certified appraisal';
 
-  // Mock addbacks for now (can be fetched from backend later)
-  const addbacks = [
+  // Use addbacks from API, fallback to defaults
+  const addbacks = valuationData?.addbacks || [
     { name: 'Owner Salary Adjustment', amount: 120000, category: 'Owner Comp' },
     { name: 'Personal Vehicle Lease', amount: 8000, category: 'One-time expense' },
     { name: 'Non-recurring Marketing', amount: 5000, category: 'Marketing' },

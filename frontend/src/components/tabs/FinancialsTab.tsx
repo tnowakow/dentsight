@@ -30,8 +30,8 @@ export const FinancialsTab = () => {
   const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
   const [isLoading, setIsLoading] = useState(true);
   const [denialRates, setDenialRates] = useState(defaultDenialRates);
-  const [productionBreakdown] = useState(defaultProductionBreakdown);
-  const [costAnalysis] = useState(defaultCostAnalysis);
+  const [productionBreakdown, setProductionBreakdown] = useState(defaultProductionBreakdown);
+  const [costAnalysis, setCostAnalysis] = useState(defaultCostAnalysis);
 
   useEffect(() => {
     if (!selectedCompanyId) return;
@@ -44,8 +44,15 @@ export const FinancialsTab = () => {
         const opsData = await fetchOperationsData(selectedCompanyId);
         
         // Update state with fetched data if available
-        if (opsData?.denialRates && opsData.denialRates.length > 0) {
+        if (opsData?.denialRates != null && opsData.denialRates.length > 0) {
           setDenialRates(opsData.denialRates);
+        }
+        if (opsData?.costAnalysis) {
+          setCostAnalysis({
+            costPerChairHour: opsData.costAnalysis.costPerChairHour ?? defaultCostAnalysis.costPerChairHour,
+            supplyCostPercent: opsData.costAnalysis.supplyCostPercent ?? defaultCostAnalysis.supplyCostPercent,
+            labFeePercent: opsData.costAnalysis.labFeePercent ?? defaultCostAnalysis.labFeePercent,
+          });
         }
       } catch (error) {
         console.error('Error fetching financials data:', error);
