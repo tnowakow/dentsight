@@ -14,7 +14,7 @@ import { CompanySelector } from './components/CompanySelector';
 import { InfoTooltip } from './components/ui/InfoTooltip';
 import { 
   Home, Activity, DollarSign, Calculator, ChevronDown, Calendar, HelpCircle, 
-  AlertTriangle, CheckCircle2, Info, ArrowRight, TrendingUp, Clock, DollarSign as DollarIcon,
+  AlertTriangle, CheckCircle2, ArrowRight, TrendingUp, Clock, DollarSign as DollarIcon,
   ChevronLeft, ChevronRight, Menu, X
 } from 'lucide-react';
 
@@ -63,8 +63,9 @@ const GlobalHeader = () => {
         <div className="h-full max-w-[1920px] mx-auto px-4 flex items-center justify-between">
           {/* Left: Logo + Company Selector */}
           <div className="flex items-center gap-6">
-            <Link to="/" className="text-xl font-bold bg-gradient-to-r from-blue-500 to-emerald-500 bg-clip-text text-transparent">
-              Dentsight
+            <Link to="/" className="flex items-center gap-2 text-xl font-bold">
+              <img src="/favicon.svg" alt="tooth" className="w-6 h-6" />
+              <span className="bg-gradient-to-r from-blue-500 to-emerald-500 bg-clip-text text-transparent">Dentsight</span>
             </Link>
             
             {/* Company Selector Component */}
@@ -151,8 +152,9 @@ const GlobalHeader = () => {
       {/* Mobile Header */}
       <header className="md:hidden h-16 border-b border-slate-800 bg-slate-950/90 backdrop-blur-md sticky top-0 z-50">
         <div className="h-full px-4 flex items-center justify-between">
-          <Link to="/" className="text-lg font-bold bg-gradient-to-r from-blue-500 to-emerald-500 bg-clip-text text-transparent">
-            Dentsight
+          <Link to="/" className="flex items-center gap-2 text-lg font-bold">
+            <img src="/favicon.svg" alt="tooth" className="w-5 h-5" />
+            <span className="bg-gradient-to-r from-blue-500 to-emerald-500 bg-clip-text text-transparent">Dentsight</span>
           </Link>
           <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-slate-400">
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -385,86 +387,147 @@ const CompactHealthScore = () => {
 // ============================================================================
 
 const RightRail = () => {
-  const { dateFilter, selectedCompanyId } = useDentsightStore();
-  const [priorities, setPriorities] = useState<any[]>([]);
+  const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
+  const [alerts, setAlerts] = useState<any[]>([]);
   const today = new Date();
   const formattedDate = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   useEffect(() => {
     if (!selectedCompanyId) return;
-    fetchRecommendations(selectedCompanyId)
-      .then(data => setPriorities((data || []).slice(0, 4)))
+    fetchAlerts(selectedCompanyId, false)
+      .then(data => setAlerts(data || []))
       .catch(() => {});
   }, [selectedCompanyId]);
-  
-  // Map date filter to display text
-  const getDateFilterDisplayText = (filter: DateFilter) => {
-    switch (filter) {
-      case 'today': return "Today's Priorities";
-      case 'this-week': return "This Week's Priorities";
-      case 'this-month': return "This Month's Priorities";
-      case 'last-month': return "Last Month's Priorities";
-      case 'this-quarter': return "This Quarter's Priorities";
-      case 'ytd': return "Year to Date's Priorities";
-      case 'custom': return "Custom Range Priorities";
-      default: return "This Week's Priorities";
-    }
-  };
 
   return (
     <aside className="w-80 flex-shrink-0 space-y-6">
-      {/* Recommended Actions — top priority */}
+      {/* Active Alerts — compact list */}
       <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 space-y-3">
-        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Recommended Actions</h3>
-        {priorities.length > 0 ? (
+        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Alerts</h3>
+        {alerts.length > 0 ? (
           <div className="space-y-2">
-            {priorities.map((priority, i) => (
+            {alerts.slice(0, 5).map((alert, i) => (
               <Link
                 key={i}
-                to={`/priorities/${i}`}
-                state={{ priority }}
-                className="block p-3 rounded-lg bg-slate-950/50 hover:bg-slate-800 transition-colors border border-slate-800/50 hover:border-blue-500/30"
+                to={`/priorities/alert-${i}`}
+                state={{ priority: {
+                  title: alert.headline || alert.metricName || 'Alert',
+                  description: alert.subtext || alert.message || '',
+                  priority: alert.severity >= 2 ? 'high' : alert.severity >= 1 ? 'medium' : 'low',
+                  category: 'Alert',
+                  actions: [],
+                  potentialImpact: null,
+                }}}
+                className="flex items-start gap-3 p-3 rounded-lg bg-slate-950/50 hover:bg-slate-800 transition-colors border border-slate-800/50 hover:border-amber-500/30"
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-xs font-bold uppercase px-1.5 py-0.5 rounded ${
-                    priority.priority === 'high' ? 'bg-red-500/20 text-red-400' :
-                    priority.priority === 'medium' ? 'bg-amber-500/20 text-amber-400' :
-                    'bg-blue-500/20 text-blue-400'
-                  }`}>{priority.priority}</span>
-                  <span className="text-xs text-slate-500">{priority.category}</span>
+                <span className={`mt-0.5 flex-shrink-0 w-2 h-2 rounded-full ${
+                  alert.severity >= 2 ? 'bg-red-500' : alert.severity >= 1 ? 'bg-amber-500' : 'bg-blue-500'
+                }`} />
+                <div className="min-w-0">
+                  <p className="text-sm text-white font-medium truncate">{alert.headline || alert.metricName}</p>
+                  <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{alert.subtext || alert.message}</p>
                 </div>
-                <p className="text-sm text-white font-medium">{priority.title}</p>
-                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{priority.description}</p>
               </Link>
             ))}
           </div>
         ) : (
-          <div className="flex items-center gap-3 p-4 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
-            <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-white">Nothing needs attention this week</p>
-              <p className="text-xs text-slate-400 mt-1">All metrics are above thresholds — great job!</p>
-            </div>
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+            <p className="text-sm text-slate-300">No active alerts</p>
           </div>
         )}
       </div>
 
-      {/* Date & Active Range */}
+      {/* Today */}
       <div className="bg-slate-900 rounded-xl border border-slate-800 p-4">
-        <h3 className="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-1">{getDateFilterDisplayText(dateFilter)}</h3>
+        <p className="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-1">Today</p>
         <p className="text-white font-medium">{formattedDate}</p>
-        <p className="text-xs text-slate-500 mt-1">Active range: Last 7 days</p>
-      </div>
-
-      {/* Last Refreshed */}
-      <div className="bg-slate-900 rounded-xl border border-slate-800 p-4">
-        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Last Refreshed</h3>
-        <p className="text-sm text-emerald-400 flex items-center gap-2">
+        <div className="flex items-center gap-2 mt-3">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          2 minutes ago
-        </p>
+          <span className="text-xs text-emerald-400">Data current</span>
+        </div>
       </div>
     </aside>
+  );
+};
+
+// ============================================================================
+// RECOMMENDED ACTIONS HERO — fetches recommendations and renders as hero cards
+// ============================================================================
+
+const RecommendedActionsHero = () => {
+  const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!selectedCompanyId) return;
+    setLoading(true);
+    fetchRecommendations(selectedCompanyId)
+      .then(data => setRecommendations((data || []).slice(0, 4)))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [selectedCompanyId]);
+
+  const iconForCategory = (category: string) => {
+    switch (category?.toLowerCase()) {
+      case 'revenue cycle':
+      case 'collections': return <DollarSign className="w-6 h-6" />;
+      case 'scheduling efficiency': return <Calendar className="w-6 h-6" />;
+      case 'patient conversion': return <TrendingUp className="w-6 h-6" />;
+      case 'cash flow': return <Clock className="w-6 h-6" />;
+      case 'treatment scheduling': return <CheckCircle2 className="w-6 h-6" />;
+      default: return <AlertTriangle className="w-6 h-6" />;
+    }
+  };
+
+  if (loading) {
+    return (
+      <section>
+        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-blue-500" />
+          Recommended Actions
+        </h2>
+        <div className="space-y-3">
+          {[1,2].map(i => (
+            <div key={i} className="h-24 bg-slate-900 rounded-xl border border-slate-800 animate-pulse" />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section>
+      <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+        <TrendingUp className="w-5 h-5 text-blue-500" />
+        Recommended Actions
+      </h2>
+      {recommendations.length > 0 ? (
+        <div className="space-y-3">
+          {recommendations.map((rec, i) => (
+            <PriorityCard
+              key={i}
+              icon={iconForCategory(rec.category)}
+              headline={rec.title}
+              subtext={rec.description}
+              ctaText="View Action Steps"
+              ctaPath={`/priorities/${i}`}
+              severity={rec.priority === 'high' ? 'high' : rec.priority === 'medium' ? 'medium' : 'low'}
+              drillDownData={rec}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="flex items-center gap-4 p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
+          <CheckCircle2 className="w-8 h-8 text-emerald-500 flex-shrink-0" />
+          <div>
+            <p className="text-white font-semibold">All metrics are on target</p>
+            <p className="text-slate-400 text-sm mt-1">No recommended actions at this time. Keep up the great work!</p>
+          </div>
+        </div>
+      )}
+    </section>
   );
 };
 
@@ -475,7 +538,6 @@ const RightRail = () => {
 const OverviewTab = () => {
   const selectedCompanyId = useDentsightStore((state) => state.selectedCompanyId);
   const [isLoading, setIsLoading] = useState(true);
-  const [alerts, setAlerts] = useState<any[]>([]);
   const [valuationPreview, setValuationPreview] = useState('$3.15M - $3.40M');
   const [kpiData, setKpiData] = useState<any>({});
 
@@ -486,10 +548,6 @@ const OverviewTab = () => {
     
     const fetchData = async () => {
       try {
-        // Fetch alerts (unresolved only)
-        const alertsData = await fetchAlerts(selectedCompanyId, false);
-        setAlerts(alertsData || []);
-
         // Fetch valuation for preview
         const valuationData = await fetchValuation(selectedCompanyId);
         if (valuationData?.valuation_range) {
@@ -511,25 +569,6 @@ const OverviewTab = () => {
     fetchData();
   }, [selectedCompanyId]);
 
-  // Convert alerts to hero priority cards (normalised to recommendation shape for drill-down)
-  const priorityAlerts = alerts.map((alert, i) => ({
-    id: alert.id,
-    headline: alert.headline || alert.metricName || 'Alert',
-    subtext: alert.subtext || alert.message || '',
-    type: alert.type || 'info',
-    severity: alert.severity || 2,
-    ctaText: (alert.type === 'warning' || alert.severity >= 1) ? 'Address Issue' : 'View Details',
-    ctaPath: `/priorities/alert-${i}`,
-    // Full object passed via router state so drill-down can render it
-    drillDownData: {
-      title: alert.headline || alert.metricName || 'Alert',
-      description: alert.subtext || alert.message || '',
-      priority: alert.severity >= 2 ? 'high' : alert.severity >= 1 ? 'medium' : 'low',
-      category: 'Alert',
-      actions: [],
-      potentialImpact: null,
-    },
-  }));
 
   if (isLoading) {
     return (
@@ -543,33 +582,8 @@ const OverviewTab = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* 1. This Week's Priorities - Hero Block */}
-      <section>
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-blue-500" />
-          This Week's Priorities
-        </h2>
-        <div className="space-y-3">
-          {priorityAlerts.map((alert) => (
-            <PriorityCard
-              key={alert.id}
-              icon={
-                alert.type === 'warning' 
-                  ? <AlertTriangle className="w-6 h-6" />
-                  : alert.type === 'success'
-                  ? <CheckCircle2 className="w-6 h-6" />
-                  : <Info className="w-6 h-6" />
-              }
-              headline={alert.headline}
-              subtext={alert.subtext}
-              ctaText={alert.ctaText}
-              ctaPath={alert.ctaPath}
-              severity={alert.severity >= 2 ? 'high' : alert.severity >= 1 ? 'medium' : 'low'}
-              drillDownData={alert.drillDownData}
-            />
-          ))}
-        </div>
-      </section>
+      {/* 1. Recommended Actions — Hero Block */}
+      <RecommendedActionsHero />
 
       {/* 2. Compact Health Score Row */}
       <section>
