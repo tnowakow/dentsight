@@ -41,38 +41,65 @@ exports.getCompanyOverview = async (req, res) => {
     }
 
     const kpis = await calculatePracticeKPIs(null, company_id);
+    const practices = Object.values(kpis);
     
-    // Aggregate across all practices in the company
-    const aggregated = Object.values(kpis).reduce((acc, data) => {
-      return {
-        monthlyProduction: (acc.monthlyProduction || 0) + (data.monthlyProduction || 0),
-        unscheduledTreatmentValue: (acc.unscheduledTreatmentValue || 0) + (data.unscheduledTreatmentValue || 0),
-        caseAcceptanceRate: (acc.caseAcceptanceRate || 0) + (data.caseAcceptanceRate || 0),
-        dso: (acc.dso || 0) + (data.dso || 0),
-        costPerChairHour: (acc.costPerChairHour || 0) + (data.costPerChairHour || 0),
-        count: acc.count + 1
-      };
-    }, { count: 0 });
+    if (practices.length === 0) {
+      return res.json({
+        company_id,
+        healthScore: null,
+        netCollectionRate: null,
+        costPerChairHour: null,
+        denialRate: null,
+        caseAcceptance: null,
+        noShowRate: null,
+        dso: null,
+        monthlyProduction: null,
+        unscheduledTreatmentValue: null
+      });
+    }
 
-    // Average the rates
-    aggregated.caseAcceptance = aggregated.count > 0 
-      ? Math.round(aggregated.caseAcceptanceRate / aggregated.count)
-      : null;
-    
-    aggregated.dso = aggregated.count > 0 
-      ? Math.round(aggregated.dso / aggregated.count)
-      : null;
+    // For single-practice companies, return that practice's data directly
+    if (practices.length === 1) {
+      const data = practices[0];
+      return res.json({
+        company_id,
+        healthScore: data.healthScore,
+        netCollectionRate: data.netCollectionRate,
+        costPerChairHour: data.costPerChairHour,
+        denialRate: data.denialRate,
+        caseAcceptance: data.caseAcceptance,
+        noShowRate: data.noShowRate,
+        dso: data.dso,
+        monthlyProduction: data.monthlyProduction,
+        unscheduledTreatmentValue: data.unscheduledTreatmentValue
+      });
+    }
+
+    // For multi-practice companies, average the rate metrics and sum the dollar metrics
+    const count = practices.length;
+    const summed = practices.reduce((acc, data) => ({
+      healthScore: (acc.healthScore || 0) + (data.healthScore || 0),
+      netCollectionRate: (acc.netCollectionRate || 0) + (data.netCollectionRate || 0),
+      costPerChairHour: (acc.costPerChairHour || 0) + (data.costPerChairHour || 0),
+      denialRate: (acc.denialRate || 0) + (data.denialRate || 0),
+      caseAcceptance: (acc.caseAcceptance || 0) + (data.caseAcceptance || 0),
+      noShowRate: (acc.noShowRate || 0) + (data.noShowRate || 0),
+      dso: (acc.dso || 0) + (data.dso || 0),
+      monthlyProduction: (acc.monthlyProduction || 0) + (data.monthlyProduction || 0),
+      unscheduledTreatmentValue: (acc.unscheduledTreatmentValue || 0) + (data.unscheduledTreatmentValue || 0),
+    }), {});
 
     res.json({
       company_id,
-      ...aggregated,
-      quickStats: {
-        monthlyProduction: aggregated.monthlyProduction || 0,
-        unscheduledTreatmentValue: aggregated.unscheduledTreatmentValue || 0,
-        noShowRate: null,
-        caseAcceptance: aggregated.caseAcceptance,
-        dso: aggregated.dso
-      }
+      healthScore: Math.round(summed.healthScore / count),
+      netCollectionRate: Math.round((summed.netCollectionRate / count) * 10) / 10,
+      costPerChairHour: Math.round((summed.costPerChairHour / count) * 10) / 10,
+      denialRate: Math.round((summed.denialRate / count) * 10) / 10,
+      caseAcceptance: Math.round((summed.caseAcceptance / count) * 10) / 10,
+      noShowRate: Math.round((summed.noShowRate / count) * 10) / 10,
+      dso: Math.round(summed.dso / count),
+      monthlyProduction: Math.round(summed.monthlyProduction),
+      unscheduledTreatmentValue: Math.round(summed.unscheduledTreatmentValue)
     });
 
   } catch (error) {
